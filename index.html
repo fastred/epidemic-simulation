@@ -4,14 +4,23 @@
 <meta charset="utf-8" />
 <title>Epidemia</title>
 <!--<link href="css/main.css" rel="stylesheet" type="text/css">-->
+<style>
+body { font: 11px Tahoma; }
+</style>
+<script type="text/javascript" src="js/polish_data.js"></script>
 <script type="text/javascript" src="js/jquery-1.8.2.min.js"></script>
 <script type="text/javascript" src="js/underscore-min.js"></script>
-<script type="text/javascript" src="app.js"></script> 
+<script type="text/javascript" src="js/app.js"></script> 
 </head>
 <body>
 
 <button id="start">start</button><br />
-<button id="stop">stop</button>
+<button id="stop">pause</button><br />
+<button id="oneStep">oneStep</button>
+<div>
+  <canvas id="picture" width="400" height="360"></canvas>
+</div>
+<div id="iteration"></div>
 <div id="values"></div>
 </body>
 </html>
