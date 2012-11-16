@@ -251,35 +251,35 @@ function Grid(_config) {
 function Picture(_cols, _rows) {
   var cols = _cols;
   var rows = _rows;
-  this.canvas = document.getElementById('picture');
-  this.ctx = this.canvas.getContext('2d');
-  this.canvasWidth = this.canvas.width;
-  this.canvasHeight = this.canvas.height;
-  this.maxInfectedInHistory = 0;
-  this.emptyCellColor = "rgb(100,100,100)";
+  var canvas = document.getElementById('picture');
+  var ctx = canvas.getContext('2d');
+  var canvasWidth = canvas.width;
+  var canvasHeight = canvas.height;
+  var maxInfectedInHistory = 0;
+  var emptyCellColor = "rgb(100,100,100)";
 
   this.update = function(cells) {
-    var cellWidth = this.canvasWidth/cols;
-    var cellHeight = this.canvasHeight/rows;
+    var cellWidth = canvasWidth/cols;
+    var cellHeight = canvasHeight/rows;
     var cellsCount = cols * rows;
     var maxInfectedInCell = _.max(cells, function(cell){
       return cell.infectedCount;
     }).infectedCount;
-    if (maxInfectedInCell > this.maxInfectedInHistory) {
-      this.maxInfectedInHistory = maxInfectedInCell;
+    if (maxInfectedInCell > maxInfectedInHistory) {
+      maxInfectedInHistory = maxInfectedInCell;
     }
     for(i = 0; i < cellsCount; i++) {
       if (cells[i].populationLimit == 0) {
-        this.ctx.fillStyle = this.emptyCellColor;
+        ctx.fillStyle = emptyCellColor;
       } else {
         //var color = 100 - Math.round(cells[i].infectedCount /
-        //this.maxInfectedInHistory * 80)
+        //maxInfectedInHistory * 80)
         var color = 100 - Math.round(cells[i].infectedCount /
                                      cells[i].populationCount * 80)
-        color = this.maxInfectedInHistory == 0 ? 100 : color;
-        this.ctx.fillStyle = "hsl(0,100%," + color + "%)";
+        color = maxInfectedInHistory == 0 ? 100 : color;
+        ctx.fillStyle = "hsl(0,100%," + color + "%)";
       }
-      this.ctx.fillRect((i % rows) * cellWidth, Math.floor(i / rows) *
+      ctx.fillRect((i % rows) * cellWidth, Math.floor(i / rows) *
                         cellHeight, cellWidth, cellHeight);
     }
   }
@@ -287,15 +287,15 @@ function Picture(_cols, _rows) {
   this.getGridPosition = function(e) {
     var x = (e.pageX - $("#picture").offset().left);
     var y = (e.pageY - $("#picture").offset().top);
-    var sizeX = this.canvas.width/cols;
-    var sizeY = this.canvas.height/rows;
+    var sizeX = canvas.width/cols;
+    var sizeY = canvas.height/rows;
     var xCell = Math.floor(x/sizeX);
     var yCell = Math.floor(y/sizeY);
     var index = xCell + yCell * cols;
     // Don't color empty cells - complexity O(n), could be replaced by hash table
     if ($.inArray(index, emptyCells) == -1) {
-      this.ctx.fillStyle = "hsl(0,100%,50%)";
-      this.ctx.fillRect(xCell*sizeX, yCell*sizeY, sizeX, sizeY);
+      ctx.fillStyle = "hsl(0,100%,50%)";
+      ctx.fillRect(xCell*sizeX, yCell*sizeY, sizeX, sizeY);
     }
     return index;
   }
