@@ -84,32 +84,35 @@ function Grid(_config) {
   var cells = new Array(cellsCount);
   var config = _config;
   var avg = 26000;
+  var populationOverallCount = 0;
+  var infectedOverallCount = 0;
 
-  this.getRowsCount = function() {
+  this.__defineGetter__("rowsCount", function(){
     return rowsCount;
-  }
-  this.getColsCount = function() {
+  });
+  this.__defineGetter__("colsCount", function(){
     return colsCount;
-  }
-  this.getCells = function() {
+  });
+  this.__defineGetter__("cells", function(){
     return cells;
-  }
+  });
+
   // Updates counts of total population and infected people.
   this.updateOverallCount = function() {
-    this.populationOverallCount = _.reduce(cells, function(memo, num) {
+    populationOverallCount = _.reduce(cells, function(memo, num) {
       return memo + num.populationCount;
     }, 0);
-    this.infectedOverallCount = _.reduce(cells, function(memo, num) {
+    infectedOverallCount = _.reduce(cells, function(memo, num) {
       return memo + num.infectedCount;
     }, 0);
   };
 
   // Helper for showing results in tabular form.
   this.showValues = function() {
-    var result = "Population overall: " + this.populationOverallCount +
-      "<br />Infected overall: " + this.infectedOverallCount +
-      "<br />Infected percentage: " + (this.infectedOverallCount /
-                                       this.populationOverallCount)
+    var result = "Population overall: " + populationOverallCount +
+      "<br />Infected overall: " + infectedOverallCount +
+      "<br />Infected percentage: " + (infectedOverallCount /
+                                       populationOverallCount)
     /*result += "<h3>Population:</h3><table>";
       for(i = 0; i < this.cellsCount; i++) {
       result += "<td width='30px'>" + this.cells[i].populationCount + "</td>";
@@ -318,16 +321,14 @@ $(document).ready(function(){
   // TODO: change to var
   config = new Configuration();
   var grid = new Grid(config);
-  console.log("population: " + grid.populationOverallCount);
-  console.log("infected: " + grid.infectedOverallCount);
   // ## epidemy object
   var epidemy = {
     grid: grid,
     iterationNumber: 0,
     running: false,
-    picture: new Picture(grid.getColsCount(), grid.getRowsCount()),
+    picture: new Picture(grid.colsCount, grid.rowsCount),
     init: function() {
-      this.picture.update(grid.getCells());
+      this.picture.update(grid.cells);
     },
     run: function() {
       this.running = true
@@ -337,7 +338,7 @@ $(document).ready(function(){
     nextStep: function() {
       this.grid.next();
       this.grid.showValues();
-      this.picture.update(grid.getCells());
+      this.picture.update(grid.cells);
       this.iterationNumber++;
       $("#iteration").html("Iteration: " + this.iterationNumber);
     },
