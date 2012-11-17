@@ -202,11 +202,7 @@ function Grid(_config) {
       currCell.simInfections(infectionRate);
       currCell.simRecoveries(config.recoveryRate);
     }
-    // Calculates new recovery rate if the recovery improvement is set.
-    config.recoveryRate *= 1 + config.recoveryImprovement;
-    if (config.recoveryRate > 1) {
-      config.recoveryRate = 1;
-    }
+    config.updateRecoveryRate();
     this.updateOverallCount();
   }
 
@@ -339,6 +335,15 @@ function Configuration() {
   this.contactInfectionRate = 0.5;
   this.recoveryRate = 0.2;
   this.recoveryImprovement = 0.01;
+
+  // Calculates new recovery rate if the recovery improvement is set.
+  this.updateRecoveryRate = function() {
+    this.recoveryRate *= 1 + this.recoveryImprovement;
+    if (this.recoveryRate > 1) {
+      this.recoveryRate = 1;
+    }
+  }
+
 };
 
 $(document).ready(function(){
