@@ -251,17 +251,32 @@ function Grid(_config) {
 function Picture(_cols, _rows) {
   var cols = _cols;
   var rows = _rows;
+  var cellsCount = cols * rows;
   var canvas = document.getElementById('picture');
   var ctx = canvas.getContext('2d');
   var canvasWidth = canvas.width;
   var canvasHeight = canvas.height;
+  var sizeX = canvas.width/cols;
+  var sizeY = canvas.height/rows;
   var maxInfectedInHistory = 0;
   var emptyCellColor = "rgb(100,100,100)";
 
+  this.getCellIndex = function(pageX, pageY) {
+    var x = (pageX - $("#picture").offset().left);
+    var y = (pageY - $("#picture").offset().top);
+    var xCell = Math.floor(x/sizeX);
+    var yCell = Math.floor(y/sizeY);
+    var index = xCell + yCell * cols;
+    return {
+      index: index,
+      xCell: xCell,
+      yCell: yCell
+    };
+  }
+
   this.update = function(cells) {
-    var cellWidth = canvasWidth/cols;
-    var cellHeight = canvasHeight/rows;
-    var cellsCount = cols * rows;
+    var sizeX = canvasWidth/cols;
+    var sizeY = canvasHeight/rows;
     var maxInfectedInCell = _.max(cells, function(cell){
       return cell.infectedCount;
     }).infectedCount;
@@ -279,25 +294,19 @@ function Picture(_cols, _rows) {
         color = maxInfectedInHistory == 0 ? 100 : color;
         ctx.fillStyle = "hsl(0,100%," + color + "%)";
       }
-      ctx.fillRect((i % rows) * cellWidth, Math.floor(i / rows) *
-                        cellHeight, cellWidth, cellHeight);
+      ctx.fillRect((i % rows) * sizeX, Math.floor(i / rows) *
+                        sizeY, sizeX, sizeY);
     }
   }
 
   this.getGridPosition = function(e) {
-    var x = (e.pageX - $("#picture").offset().left);
-    var y = (e.pageY - $("#picture").offset().top);
-    var sizeX = canvas.width/cols;
-    var sizeY = canvas.height/rows;
-    var xCell = Math.floor(x/sizeX);
-    var yCell = Math.floor(y/sizeY);
-    var index = xCell + yCell * cols;
+    var cellInfo = this.getCellIndex(e.pageX, e.pageY);
     // Don't color empty cells - complexity O(n), could be replaced by hash table
-    if ($.inArray(index, emptyCells) == -1) {
+    if ($.inArray(cellInfo.index, emptyCells) == -1) {
       ctx.fillStyle = "hsl(0,100%,50%)";
-      ctx.fillRect(xCell*sizeX, yCell*sizeY, sizeX, sizeY);
+      ctx.fillRect(cellInfo.xCell * sizeX, cellInfo.yCell*sizeY, sizeX, sizeY);
     }
-    return index;
+    return cellInfo.index;
   }
 }
 
