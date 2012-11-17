@@ -3,6 +3,14 @@ shuffle = function(o){ //v1.0
   for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
   return o;
 };
+
+function makeArrayOf(value, length) {
+  var arr = [], i = length;
+  while (i--) {
+    arr[i] = value;
+  }
+  return arr;
+}
 //## Cell class
 // This class represents one cell in the grid.
 // It contains three values:
