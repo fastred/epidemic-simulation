@@ -172,25 +172,33 @@ function Grid(_config) {
       }
     }
   }
-  // Performs next step in the simulation.
-  this.next = function() {
-    this.simImmigrations();
-    // Virus can be spread only when it's present in neighbouring cells.
-    // Probability rises when percentage of people infected in the neighbourhood
-    // rises. This probability is calculated before other steps.
-    var vectoredRates = new Array(cellsCount);
+
+  // Virus can be spread only when it's present in neighbouring cells.
+  // Probability rises when percentage of people infected in the neighbourhood
+  // rises. This probability is calculated before other steps.
+  this.calculateVectoredRates = function() {
+    var vectoredRates = makeArrayOf(0, cellsCount);
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
       var neighbours = this.getNeighbours(i);
       var neighbourhoodCapacity = _.reduce(neighbours, function(memo, num) {
         return memo + cells[num].populationCount;
       }, 0, this);
-      var neighbourhoodInfected = _.reduce(neighbours, function(memo, num) {
-        return memo + cells[num].infectedCount;
-      }, 0, this);
-      vectoredRates[i] = (neighbourhoodCapacity > 0) ? (neighbourhoodInfected / neighbourhoodCapacity) *
-        config.vectoredInfectionRate : 0;
+      if (neighbourhoodCapacity > 0) {
+        var neighbourhoodInfected = _.reduce(neighbours, function(memo, num) {
+          return memo + cells[num].infectedCount;
+        }, 0, this);
+        vectoredRates[i] = (neighbourhoodInfected / neighbourhoodCapacity) *
+          config.vectoredInfectionRate;
+      }
     }
+    return vectoredRates;
+  }
+
+  // Performs next step in the simulation.
+  this.next = function() {
+    this.simImmigrations();
+    var vectoredRates = this.calculateVectoredRates();
     // Simulates natural deaths, deaths caused by the virus and new births.
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
@@ -201,13 +209,9 @@ function Grid(_config) {
     // Simulates new contact and vectored infections. Then simulates recoveries.
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
-      var limitContactRate = Math.min(500 * currCell.infectedCount /
-                                      currCell.populationCount, 1);
-      var infectionRate = vectoredRates[i] +
-        ((currCell.infectedCount > 0) ?
-         limitContactRate*config.contactInfectionRate : 0);
-      infectionRate * (Math.random()*0.1)+1;
-      currCell.simInfections(infectionRate);
+      var limitContactRate = currCell.infectedCount / currCell.populationCount;
+      var contactRate = limitContactRate * config.contactInfectionRate
+      currCell.simInfections(vectoredRates[i] + contactRate);
       currCell.simRecoveries(config.recoveryRate);
     }
     config.updateRecoveryRate();
