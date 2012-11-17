@@ -207,8 +207,7 @@ function Grid(_config) {
   }
 
   this.setAsInfected = function(index) {
-    cells[index].infectedCount = Math.round(cells[index].
-                                                 populationCount/2);
+    cells[index].infectedCount = cells[index].populationCount;
     this.updateOverallCount();
   }
 
