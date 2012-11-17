@@ -113,26 +113,6 @@ function Grid(_config) {
     }, 0);
   };
 
-  // Helper for showing results in tabular form.
-  this.showValues = function() {
-    var result = "Population overall: " + populationOverallCount +
-      "<br />Infected overall: " + infectedOverallCount +
-      "<br />Infected percentage: " + (infectedOverallCount /
-                                       populationOverallCount)
-    /*result += "<h3>Population:</h3><table>";
-      for(i = 0; i < this.cellsCount; i++) {
-      result += "<td width='30px'>" + this.cells[i].populationCount + "</td>";
-      if((i + 1) % this.rowsCount === 0) { result += "</tr><tr>"; }
-      }
-      result += "</table><h3>Infected:</h3><table>";
-      for(i = 0; i < this.cellsCount; i++) {
-      result += "<td width='30px'>" + this.cells[i].infectedCount + "</td>";
-      if((i + 1) % this.rowsCount === 0) { result += "</tr><tr>"; }
-      }
-      result += "</table>";*/
-    $("#values").html(result);
-  };
-
   // Returns indices of neighbouring cells.
   this.getNeighbours = function(index) {
     var neighbours = [];
@@ -234,7 +214,6 @@ function Grid(_config) {
     cells[index].infectedCount = Math.round(cells[index].
                                                  populationCount/2);
     this.updateOverallCount();
-    this.showValues();
   }
 
   for(i = 0; i < cellsCount; i++) {
@@ -383,11 +362,14 @@ $(document).ready(function(){
     },
     nextStep: function() {
       this.grid.next();
-      this.grid.showValues();
       this.picture.update(grid.cells);
       this.plot.update(grid.populationOverallCount, grid.infectedOverallCount);
       this.iterationNumber++;
       $("#iteration").html("Iteration: " + this.iterationNumber);
+      $("#values").html("Population overall: " + grid.populationOverallCount +
+      "<br />Infected overall: " + grid.infectedOverallCount +
+      "<br />Infected percentage: " + (grid.infectedOverallCount /
+                                       grid.populationOverallCount));
     },
     stop: function() {
       this.running = false;
