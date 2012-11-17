@@ -96,6 +96,12 @@ function Grid(_config) {
   this.__defineGetter__("cells", function(){
     return cells;
   });
+  this.__defineGetter__("populationOverallCount", function(){
+    return populationOverallCount;
+  });
+  this.__defineGetter__("infectedOverallCount", function(){
+    return infectedOverallCount;
+  });
 
   // Updates counts of total population and infected people.
   this.updateOverallCount = function() {
@@ -312,6 +318,26 @@ function Picture(_cols, _rows) {
 
 // # Plot class
 function Plot() {
+  var options = {
+    series: { shadowSize: 0 }, // drawing is faster without shadows
+    xaxis: { show: true }
+  };
+  var historyOverall = new Array();
+  var historyInfected = new Array();
+  var plot = $.plot($("#plot"), [], options);
+
+  this.update = function(overall, infected) {
+    var count = historyOverall.length;
+    historyOverall.push([count, overall]);
+    historyInfected.push([count, infected]);
+    plot.setData([{ label: "Country population", color: "rgb(0, 185, 0)",
+                 data: historyOverall},
+                 { label: "Infected",
+      color: "rgb(185, 0, 0)",
+      data: historyInfected}]);
+    plot.draw();
+    plot.setupGrid();
+  }
 }
 
 // ## Configuration class
@@ -336,6 +362,7 @@ $(document).ready(function(){
     iterationNumber: 0,
     running: false,
     picture: new Picture(grid.colsCount, grid.rowsCount),
+    plot: new Plot(),
     init: function() {
       this.picture.update(grid.cells);
     },
@@ -348,6 +375,7 @@ $(document).ready(function(){
       this.grid.next();
       this.grid.showValues();
       this.picture.update(grid.cells);
+      this.plot.update(grid.populationOverallCount, grid.infectedOverallCount);
       this.iterationNumber++;
       $("#iteration").html("Iteration: " + this.iterationNumber);
     },
