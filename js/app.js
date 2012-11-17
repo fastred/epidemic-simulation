@@ -246,10 +246,7 @@ function Picture(_cols, _rows) {
   var canvasHeight = canvas.height;
   var sizeX = canvas.width/cols;
   var sizeY = canvas.height/rows;
-  var maxInfectedInHistory = 0;
-  var colorHistory = _.map(new Array(_cols * _rows), function (val) {
-    return -1;
-  });
+  var colorHistory = makeArrayOf(-1, _cols * _rows);
 
   this.getCellIndex = function(pageX, pageY) {
     var x = (pageX - $("#picture").offset().left);
@@ -267,29 +264,18 @@ function Picture(_cols, _rows) {
   this.update = function(cells) {
     var sizeX = canvasWidth/cols;
     var sizeY = canvasHeight/rows;
-    var maxInfectedInCell = _.max(cells, function(cell){
-      return cell.infectedCount;
-    }).infectedCount;
-    if (maxInfectedInCell > maxInfectedInHistory) {
-      maxInfectedInHistory = maxInfectedInCell;
-    }
+
     for(i = 0; i < cellsCount; i++) {
-      //var color = "rgb(100,100,100)";
-      var color = 0;
-        //var color = 100 - Math.round(cells[i].infectedCount /
-        //maxInfectedInHistory * 80)
-      color = 100 - Math.round(cells[i].infectedCount /
-                               cells[i].populationCount * 80)
-      //color = maxInfectedInHistory == 0 ? 100 : color;
+      var color = 100 - Math.round(cells[i].infectedCount /
+                               cells[i].populationCount * 80);
       if (colorHistory[i] != color) {
         if (cells[i].populationLimit == 0) {
           ctx.fillStyle = "rgb(100,100,100)";
         } else {
           ctx.fillStyle = "hsl(0,100%," + color + "%)";
         }
-        ctx.clearRect((i % rows) * sizeX, Math.floor(i / rows) *
-                      sizeY, sizeX, sizeY);
-
+        //ctx.clearRect((i % rows) * sizeX, Math.floor(i / rows) *
+                      //sizeY, sizeX, sizeY);
         ctx.fillRect((i % rows) * sizeX, Math.floor(i / rows) *
                      sizeY, sizeX, sizeY);
       }
