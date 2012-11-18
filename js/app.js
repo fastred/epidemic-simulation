@@ -332,14 +332,14 @@ function Plot() {
 
 // ## Configuration class
 function Configuration() {
-  this.immigrationRate = 0.01;
-  this.birthRate = 0.01;
+  this.immigrationRate = 0.05;
+  this.birthRate = 0.010103;
   this.naturalDeathRate = 0.01;
-  this.virusMorbidity = 0.03;
-  this.vectoredInfectionRate = 0.1;
-  this.contactInfectionRate = 0.5;
+  this.virusMorbidity = 0.01;
+  this.vectoredInfectionRate = 0.4;
+  this.contactInfectionRate = 0.7;
   this.recoveryRate = 0.2;
-  this.recoveryImprovement = 0.01;
+  this.recoveryImprovement = 0.003;
 
   // Calculates new recovery rate if the recovery improvement is set.
   this.updateRecoveryRate = function() {
