@@ -370,24 +370,29 @@ $(document).ready(function(){
       var that = this;
       this.interval = setInterval(function() { that.nextStep()}, 100 );
     },
-    nextStep: function() {
-      this.grid.next();
-      this.picture.update(grid.cells);
-      this.plot.update(grid.populationOverallCount, grid.infectedOverallCount);
-      this.iterationNumber++;
+    showStats: function() {
       $("#iteration").html("Iteration: " + this.iterationNumber);
       $("#values").html("Population overall: " + grid.populationOverallCount +
       "<br />Infected overall: " + grid.infectedOverallCount +
       "<br />Infected percentage: " + (grid.infectedOverallCount /
                                        grid.populationOverallCount));
     },
+    nextStep: function() {
+      this.grid.next();
+      this.picture.update(grid.cells);
+      this.plot.update(grid.populationOverallCount, grid.infectedOverallCount);
+      this.iterationNumber++;
+      this.showStats();
+    },
     stop: function() {
       this.running = false;
       clearInterval(this.interval);
     },
-    infectedUpdated: function (event) {
+    infectedUpdated: function(event) {
       var index = this.picture.getGridPosition(event);
       this.grid.setAsInfected(index);
+      this.showStats();
+    },
     exportImage: function() {
       this.picture.exportImage();
     }
