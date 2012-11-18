@@ -296,6 +296,14 @@ function Picture(_cols, _rows) {
     }
     return cellInfo.index;
   }
+
+  this.exportImage = function() {
+    //var data = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    var data = canvas.toDataURL("image/png");
+    //window.location = data;
+    window.open(data);
+  }
+
 }
 
 // # Plot class
@@ -380,6 +388,8 @@ $(document).ready(function(){
     infectedUpdated: function (event) {
       var index = this.picture.getGridPosition(event);
       this.grid.setAsInfected(index);
+    exportImage: function() {
+      this.picture.exportImage();
     }
   };
   epidemy.init();
@@ -401,6 +411,9 @@ $(document).ready(function(){
   });
   $("#picture").click(function(e){
     epidemy.infectedUpdated(e);
+  });
+  $("#exportImage").click(function() {
+    epidemy.exportImage();
   });
 });
 
