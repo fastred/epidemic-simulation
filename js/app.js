@@ -11,7 +11,7 @@ function makeArrayOf(value, length) {
   }
   return arr;
 }
-//## Cell class
+//# Cell class
 // This class represents one cell in the grid.
 // It contains three values:
 //
@@ -83,7 +83,7 @@ function Cell(populationCount, infectedCount, populationLimit) {
   }
 }
 
-// ## Grid class
+// # Grid class
 // It represents grid of cells.
 function Grid(_config) {
   var rowsCount = 40;
@@ -238,7 +238,7 @@ function Grid(_config) {
   this.updateOverallCount();
 }
 
-// ## Picture class
+// # Picture class
 // Shows map of Poland, gather mouse clicks.
 function Picture(_cols, _rows) {
   var colsCount = _cols;
@@ -338,7 +338,7 @@ function Plot() {
   }
 }
 
-// ## Configuration class
+// # Configuration class
 function Configuration() {
   this.immigrationRate = 0.05;
   this.birthRate = 0.010103;
@@ -363,7 +363,7 @@ $(document).ready(function(){
   // TODO: change to var
   config = new Configuration();
   var grid = new Grid(config);
-  // ## epidemy object
+  // # epidemy object
   var epidemy = {
     grid: grid,
     iterationNumber: 0,
@@ -408,7 +408,7 @@ $(document).ready(function(){
   };
   epidemy.init();
 
-  // ## Events.
+  // # Events.
   var startButton = $("#start");
   var stopButton = $("#stop");
   var oneStepButton = $("#oneStep");
