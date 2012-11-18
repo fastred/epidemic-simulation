@@ -20,11 +20,15 @@ body { font: 11px Tahoma; }
 <button id="oneStep">oneStep</button><br />
 <button id="exportImage">export as image</button><br />
 
-<div>
-  <canvas id="picture" width="400" height="360"></canvas>
+<div style="height: 360px;">
+  <canvas id="picture" width="400" height="360" style="position: absolute;"></canvas>
+  <img id="poland_map" src="poland_small.png" />
 </div>
 <div id="iteration"></div>
 <div id="values"></div>
 <div id="plot" style="width:600px;height:300px"></div>
+<p>
+Map image source: http://mapa.zumi.pl/
+</p>
 </body>
 </html>

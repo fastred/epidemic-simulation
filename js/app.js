@@ -270,18 +270,18 @@ function Picture(_cols, _rows) {
     var sizeY = canvasHeight/rows;
 
     for(i = 0; i < cellsCount; i++) {
-      var color = 100 - Math.round(cells[i].infectedCount /
-                               cells[i].populationCount * 80);
+      var color = cells[i].infectedCount / cells[i].populationCount;
       if (colorHistory[i] != color) {
         if (cells[i].populationLimit == 0) {
           ctx.fillStyle = "rgb(100,100,100)";
         } else {
-          ctx.fillStyle = "hsl(0,100%," + color + "%)";
+          //ctx.fillStyle = "hsl(0,100%," + color + "%)";
+          ctx.fillStyle = "rgba(255,0,0," + color + ")";
+          ctx.clearRect((i % rows) * sizeX, Math.floor(i / rows) *
+                        sizeY, sizeX, sizeY);
+          ctx.fillRect((i % rows) * sizeX, Math.floor(i / rows) *
+                       sizeY, sizeX, sizeY);
         }
-        //ctx.clearRect((i % rows) * sizeX, Math.floor(i / rows) *
-                      //sizeY, sizeX, sizeY);
-        ctx.fillRect((i % rows) * sizeX, Math.floor(i / rows) *
-                     sizeY, sizeX, sizeY);
       }
       colorHistory[i] = color;
     }
@@ -298,12 +298,17 @@ function Picture(_cols, _rows) {
   }
 
   this.exportImage = function() {
-    //var data = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-    var data = canvas.toDataURL("image/png");
-    //window.location = data;
+    // Create offscreen buffer.
+    buffer = document.createElement('canvas');
+    buffer.width = canvasWidth;
+    buffer.height = canvasHeight;
+    bx = buffer.getContext('2d');
+    bx.drawImage(document.getElementById('poland_map'), 0, 0);
+    bx.drawImage(canvas, 0, 0);
+
+    var data = buffer.toDataURL("image/png");
     window.open(data);
   }
-
 }
 
 // # Plot class
