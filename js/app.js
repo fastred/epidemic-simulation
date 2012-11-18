@@ -426,6 +426,12 @@ $(document).ready(function(){
   $("#picture").click(function(e){
     epidemy.infectedUpdated(e);
   });
+  $("#picture").mouseenter(function(e){
+    $("#help").html("Please click on the map to select the region as infected.");
+  });
+  $("#picture").mouseleave(function(e){
+    $("#help").html("");
+  });
   $("#exportImage").click(function() {
     epidemy.exportImage();
   });
