@@ -241,33 +241,34 @@ function Grid(_config) {
 // ## Picture class
 // Shows map of Poland, gather mouse clicks.
 function Picture(_cols, _rows) {
-  var cols = _cols;
-  var rows = _rows;
-  var cellsCount = cols * rows;
+  var colsCount = _cols;
+  var rowsCount = _rows;
+  var cellsCount = colsCount * rowsCount;
   var canvas = document.getElementById('picture');
   var ctx = canvas.getContext('2d');
   var canvasWidth = canvas.width;
   var canvasHeight = canvas.height;
-  var sizeX = canvas.width/cols;
-  var sizeY = canvas.height/rows;
-  var colorHistory = makeArrayOf(-1, _cols * _rows);
+  var sizeX = canvas.width/colsCount;
+  var sizeY = canvas.height/rowsCount;
+  // used for checking if new color of the cell is the same as previous one
+  var colorHistory = makeArrayOf(-1, colsCount * rowsCount);
 
-  this.getCellIndex = function(pageX, pageY) {
+  this.getCellPosition = function(pageX, pageY) {
     var x = (pageX - $("#picture").offset().left);
     var y = (pageY - $("#picture").offset().top);
-    var xCell = Math.floor(x/sizeX);
-    var yCell = Math.floor(y/sizeY);
-    var index = xCell + yCell * cols;
+    var col = Math.floor(x/sizeX);
+    var row = Math.floor(y/sizeY);
+    var index = col + row * colsCount;
     return {
       index: index,
-      xCell: xCell,
-      yCell: yCell
+      col: col,
+      row: row
     };
   }
 
-  this.update = function(cells) {
-    var sizeX = canvasWidth/cols;
-    var sizeY = canvasHeight/rows;
+  this.updateWithNewData = function(cells) {
+    var sizeX = canvasWidth/colsCount;
+    var sizeY = canvasHeight/rowsCount;
 
     for(i = 0; i < cellsCount; i++) {
       var color = cells[i].infectedCount / cells[i].populationCount;
@@ -277,9 +278,9 @@ function Picture(_cols, _rows) {
         } else {
           //ctx.fillStyle = "hsl(0,100%," + color + "%)";
           ctx.fillStyle = "rgba(255,0,0," + color + ")";
-          ctx.clearRect((i % rows) * sizeX, Math.floor(i / rows) *
+          ctx.clearRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
                         sizeY, sizeX, sizeY);
-          ctx.fillRect((i % rows) * sizeX, Math.floor(i / rows) *
+          ctx.fillRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
                        sizeY, sizeX, sizeY);
         }
       }
@@ -287,14 +288,16 @@ function Picture(_cols, _rows) {
     }
   }
 
-  this.getGridPosition = function(e) {
-    var cellInfo = this.getCellIndex(e.pageX, e.pageY);
+  this.getClickedCellPosition = function(e) {
+    return this.getCellPosition(e.pageX, e.pageY);
+  }
+
+  this.setAsInfected = function(index, col, row) {
     // Don't color empty cells - complexity O(n), could be replaced by hash table
-    if ($.inArray(cellInfo.index, emptyCells) == -1) {
+    if ($.inArray(index, emptyCells) == -1) {
       ctx.fillStyle = "hsl(0,100%,50%)";
-      ctx.fillRect(cellInfo.xCell * sizeX, cellInfo.yCell*sizeY, sizeX, sizeY);
+      ctx.fillRect(row * sizeX, col * sizeY, sizeX, sizeY);
     }
-    return cellInfo.index;
   }
 
   this.exportImage = function() {
@@ -321,7 +324,7 @@ function Plot() {
   var historyInfected = new Array();
   var plot = $.plot($("#plot"), [], options);
 
-  this.update = function(overall, infected) {
+  this.updateWithNewData = function(overall, infected) {
     var count = historyOverall.length;
     historyOverall.push([count, overall]);
     historyInfected.push([count, infected]);
@@ -368,7 +371,7 @@ $(document).ready(function(){
     picture: new Picture(grid.colsCount, grid.rowsCount),
     plot: new Plot(),
     init: function() {
-      this.picture.update(grid.cells);
+      this.picture.updateWithNewData(grid.cells);
     },
     run: function() {
       this.running = true
@@ -384,8 +387,8 @@ $(document).ready(function(){
     },
     nextStep: function() {
       this.grid.next();
-      this.picture.update(grid.cells);
-      this.plot.update(grid.populationOverallCount, grid.infectedOverallCount);
+      this.picture.updateWithNewData(grid.cells);
+      this.plot.updateWithNewData(grid.populationOverallCount, grid.infectedOverallCount);
       this.iterationNumber++;
       this.showStats();
     },
@@ -394,8 +397,9 @@ $(document).ready(function(){
       clearInterval(this.interval);
     },
     infectedUpdated: function(event) {
-      var index = this.picture.getGridPosition(event);
-      this.grid.setAsInfected(index);
+      var pos = this.picture.getClickedCellPosition(event);
+      this.grid.setAsInfected(pos.index);
+      this.picture.setAsInfected(pos.index, pos.row, pos.col);
       this.showStats();
     },
     exportImage: function() {
