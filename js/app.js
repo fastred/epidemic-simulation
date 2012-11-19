@@ -275,8 +275,8 @@ function Picture(_cols, _rows) {
     }
   }
 
-  this.getClickedCellPosition = function(e) {
-    return this.getCellPosition(e.pageX, e.pageY);
+  this.getClickedCellPosition = function(event) {
+    return this.getCellPosition(event.pageX, event.pageY);
   }
 
   this.setAsInfected = function(index, col, row) {
@@ -443,7 +443,7 @@ $(document).ready(function(){
   var pauseButton = $("#pause");
   var oneStepButton = $("#oneStep");
   var exportImageButton = $("#exportImage");
-  startButton.click(function() {
+  startButton.click(function(event) {
     event.preventDefault();
     if (!epidemy.running) {
       $(this).attr("disabled", "disabled");
@@ -452,18 +452,18 @@ $(document).ready(function(){
       epidemy.run();
     }
   });
-  pauseButton.click(function() {
+  pauseButton.click(function(event) {
     event.preventDefault();
     startButton.removeAttr("disabled");
     oneStepButton.removeAttr("disabled");
     pauseButton.attr("disabled", "disabled");
     epidemy.pause();
   });
-  oneStepButton.click(function() {
+  oneStepButton.click(function(event) {
     event.preventDefault();
     epidemy.nextStep();
   });
-  exportImageButton.click(function() {
+  exportImageButton.click(function(event) {
     event.preventDefault();
     epidemy.exportImage();
   });
@@ -471,18 +471,18 @@ $(document).ready(function(){
   pauseButton.tooltip();
   oneStepButton.tooltip();
   exportImageButton.tooltip();
-  $("#picture").click(function(e){
-    epidemy.infectedUpdated(e);
+  $("#picture").click(function(event){
+    epidemy.infectedUpdated(event);
   });
-  $("#ep1").click(function() {
+  $("#ep1").click(function(event) {
     event.preventDefault();
     config.loadPreloaded(1);
   });
-  $("#ep2").click(function() {
+  $("#ep2").click(function(event) {
     event.preventDefault();
     config.loadPreloaded(2);
   });
-  $("#ep3").click(function() {
+  $("#ep3").click(function(event) {
     event.preventDefault();
     config.loadPreloaded(3);
   });
