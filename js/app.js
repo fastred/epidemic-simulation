@@ -6,6 +6,14 @@ function makeArrayOf(value, length) {
   return arr;
 }
 
+function supports_html5_storage() {
+  try {
+    return 'localStorage' in window && window['localStorage'] !== null;
+  } catch (e) {
+    return false;
+  }
+}
+
 //# Cell class
 // This class represents one cell in the grid.
 // It contains three values:
@@ -215,6 +223,14 @@ function Grid(_config) {
     this.updateOverallCount();
   }
 
+  this.loadState = function(loaded) {
+    for(i = 0; i < cellsCount; i++) {
+      cells[i].populationCount = loaded[i].populationCount;
+      cells[i].infectedCount = loaded[i].infectedCount;
+      cells[i].populationLimit = loaded[i].populationLimit;
+    }
+  }
+
   // constructor
   var avg = 26000;
   for(i = 0; i < cellsCount; i++) {
@@ -311,17 +327,34 @@ function Plot() {
   var historyInfected = new Array();
   var plot = $.plot($("#plot"), [], options);
 
+  this.__defineGetter__("historyOverall", function(){
+    return historyOverall;
+  });
+  this.__defineSetter__("historyOverall", function(val){
+    historyOverall = val;
+  });
+  this.__defineGetter__("historyInfected", function(){
+    return historyInfected;
+  });
+  this.__defineSetter__("historyInfected", function(val){
+    historyInfected = val;
+  });
+
   this.updateWithNewData = function(overall, infected) {
     var count = historyOverall.length;
     historyOverall.push([count, overall]);
     historyInfected.push([count, infected]);
+    this.refresh();
+  }
+
+  this.refresh = function() {
     plot.setData([{ label: "Country population", color: "rgb(0, 185, 0)",
-                 data: historyOverall},
+                 data: historyOverall },
                  { label: "Infected",
-      color: "rgb(185, 0, 0)",
-      data: historyInfected}]);
-    plot.draw();
+                   color: "rgb(185, 0, 0)",
+                   data: historyInfected}]);
     plot.setupGrid();
+    plot.draw();
   }
 }
 
@@ -371,14 +404,7 @@ function Configuration() {
       this.recoveryRate = 0.1;
       this.recoveryImprovement = 0.00;
     }
-    $("#immigrationRate").val(this.immigrationRate);
-    $("#birthRate").val(this.birthRate);
-    $("#naturalDeathRate").val(this.naturalDeathRate);
-    $("#virusMorbidity").val(this.virusMorbidity);
-    $("#vectoredInfectionRate").val(this.vectoredInfectionRate);
-    $("#contactInfectionRate").val(this.contactInfectionRate);
-    $("#recoveryRate").val(this.recoveryRate);
-    $("#recoveryImprovement").val(this.recoveryImprovement);
+    this.refreshForm();
   }
 
   this.loadFromForm = function() {
@@ -390,6 +416,24 @@ function Configuration() {
     this.contactInfectionRate = parseFloat($("#contactInfectionRate").val());
     this.recoveryRate = parseFloat($("#recoveryRate").val());
     this.recoveryImprovement = parseFloat($("#recoveryImprovement").val());
+  }
+
+  this.loadState = function(loaded) {
+    for (var prop in loaded) {
+      this[prop] = loaded[prop];
+    }
+    this.refreshForm();
+  }
+
+  this.refreshForm = function() {
+    $("#immigrationRate").val(this.immigrationRate);
+    $("#birthRate").val(this.birthRate);
+    $("#naturalDeathRate").val(this.naturalDeathRate);
+    $("#virusMorbidity").val(this.virusMorbidity);
+    $("#vectoredInfectionRate").val(this.vectoredInfectionRate);
+    $("#contactInfectionRate").val(this.contactInfectionRate);
+    $("#recoveryRate").val(this.recoveryRate);
+    $("#recoveryImprovement").val(this.recoveryImprovement);
   }
 };
 
@@ -443,6 +487,8 @@ $(document).ready(function(){
   var pauseButton = $("#pause");
   var oneStepButton = $("#oneStep");
   var exportImageButton = $("#exportImage");
+  var saveStateButton = $("#saveState");
+  var loadStateButton = $("#loadState");
   startButton.click(function(event) {
     event.preventDefault();
     if (!epidemy.running) {
@@ -467,10 +513,59 @@ $(document).ready(function(){
     event.preventDefault();
     epidemy.exportImage();
   });
+  // Saves state.
+  saveStateButton.click(function(event) {
+    if (!supports_html5_storage()) { return false; }
+    var id = (new Date()).toGMTString();
+    var state = {}
+    state["cells"] = epidemy.grid.cells;
+    state["iterationNumber"] = epidemy.iterationNumber;
+    state["historyOverall"] = epidemy.plot.historyOverall;
+    state["historyInfected"] = epidemy.plot.historyInfected;
+    state["config"] = config;
+    localStorage[id] = JSON.stringify(state);
+    console.log(localStorage.length);
+  });
+  // Show modal window for selecting saved state.
+  loadStateButton.click(function(event) {
+    if (!supports_html5_storage()) { return false; }
+    var list = $("#loadStateList");
+    list.html("");
+    for (var prop in localStorage) {
+      list.append('<li><a href="#" class="loadStateLink">' + prop + '</a>' +
+                  '<a class="btn btn-mini btn-danger stateDelete" href="#">' +
+                  'delete</a></li>');
+    }
+    if (localStorage.length == 0) {
+      list.append("<li>You don't have any saved models!</li>");
+    }
+  });
+  // Loads state selected from the list.
+  $(".loadStateLink").live("click", function(event) {
+    $('#savesList').modal('hide')
+    var id = $(this).text();
+    var state = JSON.parse(localStorage[id]);
+    epidemy.grid.loadState(state.cells);
+    epidemy.iterationNumber = state.iterationNumber;
+    epidemy.plot.historyOverall = state["historyOverall"];
+    epidemy.plot.historyInfected = state["historyInfected"];
+    config.loadState(state["config"]);
+    epidemy.plot.refresh();
+    epidemy.init();
+  });
+  // Deletes saved state.
+  $(".stateDelete").live("click", function(event) {
+    var id = $(this).prev().text();
+    $(this).parent().remove();
+    delete localStorage[id];
+  });
+
   startButton.tooltip();
   pauseButton.tooltip();
   oneStepButton.tooltip();
   exportImageButton.tooltip();
+  saveStateButton.tooltip();
+  loadStateButton.tooltip();
   $("#picture").click(function(event){
     epidemy.infectedUpdated(event);
   });

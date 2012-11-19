@@ -27,11 +27,14 @@
       </div>
       <div class="btn-toolbar" style="text-align: center">
         <div class="btn-group">
-
           <a class="btn" id="start" href="#" title="Start simulation"><i class="icon-play"></i></a>
           <a class="btn" id="pause" href="#" title="Pause" disabled="disabled"><i class="icon-pause"></i></a>
           <a class="btn" id="oneStep" href="#" title="One step forward"><i class="icon-step-forward"></i></a>
+        </div>
+        <div class="btn-group">
           <a class="btn" id="exportImage" href="#" title="Export as a picture"><i class="icon-picture"></i></a>
+          <a class="btn" id="saveState" href="#" title="Save the current state of the simulation"><i class="icon-download-alt"></i></a>
+          <a class="btn" id="loadState" href="#savesList" title="Load saved state" role="button" data-toggle="modal"><i class="icon-folder-open"></i></a>
         </div>
       </div>
       <div id="iteration">Day: 0</div>
@@ -80,11 +83,6 @@
         <fieldset>
         </fieldset>
       </form>
-
-      <!--<button id="start">start</button><br />-->
-      <!--<button id="stop">pause</button><br />-->
-      <!--<button id="oneStep">oneStep</button><br />-->
-      <!--<button id="exportImage">export as image</button><br />-->
     </div>
   </div>
   <div id="plot" style="width:940px;height:150px"></div>
@@ -92,7 +90,20 @@
   Map image source: http://mapa.zumi.pl/
   </p>
 </div>
-
-
+<div id="savesList" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Please choose the model to load</h3>
+  </div>
+  <div class="modal-body">
+    <div id="loadStateBlock" style="background-color: #fff;">
+      <ul class="" id="loadStateList">
+      </ul>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+  </div>
+</div>
 </body>
 </html>
