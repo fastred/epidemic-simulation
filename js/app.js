@@ -327,23 +327,70 @@ function Plot() {
 
 // # Configuration class
 function Configuration() {
-  this.immigrationRate = 0.05;
-  this.birthRate = 0.010103;
-  this.naturalDeathRate = 0.01;
-  this.virusMorbidity = 0.01;
-  this.vectoredInfectionRate = 0.4;
-  this.contactInfectionRate = 0.7;
-  this.recoveryRate = 0.2;
-  this.recoveryImprovement = 0.003;
 
   // Calculates new recovery rate if the recovery improvement is set.
   this.updateRecoveryRate = function() {
     this.recoveryRate *= 1 + this.recoveryImprovement;
+    // round to 4 decimals
+    this.recoveryRate = Math.round(this.recoveryRate*10000)/10000
     if (this.recoveryRate > 1) {
       this.recoveryRate = 1;
     }
+    $("#recoveryRate").val(this.recoveryRate);
   }
 
+  this.loadPreloaded = function(id) {
+    if (id == 1) {
+      // influenza
+      this.immigrationRate = 0.05;
+      this.birthRate = 0.0101;
+      this.naturalDeathRate = 0.01;
+      this.virusMorbidity = 0.01;
+      this.vectoredInfectionRate = 0.4;
+      this.contactInfectionRate = 0.7;
+      this.recoveryRate = 0.2;
+      this.recoveryImprovement = 0.008;
+    } else if(id == 2) {
+      // smallpox
+      this.immigrationRate = 0.02;
+      this.birthRate = 0.0101;
+      this.naturalDeathRate = 0.01;
+      this.virusMorbidity = 0.01;
+      this.vectoredInfectionRate = 0.4;
+      this.contactInfectionRate = 0.7;
+      this.recoveryRate = 0.2;
+      this.recoveryImprovement = 0.008;
+    } else if(id == 3) {
+      // zombie
+      this.immigrationRate = 0.2;
+      this.birthRate = 0.0101;
+      this.naturalDeathRate = 0.01;
+      this.virusMorbidity = 0.001;
+      this.vectoredInfectionRate = 0;
+      this.contactInfectionRate = 0.5;
+      this.recoveryRate = 0.1;
+      this.recoveryImprovement = 0.00;
+    }
+    $("#immigrationRate").val(this.immigrationRate);
+    $("#birthRate").val(this.birthRate);
+    $("#naturalDeathRate").val(this.naturalDeathRate);
+    $("#virusMorbidity").val(this.virusMorbidity);
+    $("#vectoredInfectionRate").val(this.vectoredInfectionRate);
+    $("#contactInfectionRate").val(this.contactInfectionRate);
+    $("#recoveryRate").val(this.recoveryRate);
+    $("#recoveryImprovement").val(this.recoveryImprovement);
+  }
+
+  this.loadFromForm = function() {
+    this.immigrationRate = parseFloat($("#immigrationRate").val());
+    this.birthRate = parseFloat($("#birthRate").val());
+    this.naturalDeathRate = parseFloat($("#naturalDeathRate").val());
+    this.virusMorbidity = parseFloat($("#virusMorbidity").val());
+    this.vectoredInfectionRate = parseFloat($("#vectoredInfectionRate").val());
+    this.contactInfectionRate = parseFloat($("#contactInfectionRate").val());
+    this.recoveryRate = parseFloat($("#recoveryRate").val());
+    this.recoveryImprovement = parseFloat($("#recoveryImprovement").val());
+  }
 };
 
 $(document).ready(function(){
@@ -379,7 +426,7 @@ $(document).ready(function(){
       this.iterationNumber++;
       this.showStats();
     },
-    stop: function() {
+    pause: function() {
       this.running = false;
       clearInterval(this.interval);
     },
@@ -397,30 +444,56 @@ $(document).ready(function(){
 
   // # Events.
   var startButton = $("#start");
-  var stopButton = $("#stop");
+  var pauseButton = $("#pause");
   var oneStepButton = $("#oneStep");
+  var exportImageButton = $("#exportImage");
   startButton.click(function() {
-    $(this).attr("disabled", "disabled");
-    epidemy.run();
+    event.preventDefault();
+    if (!epidemy.running) {
+      $(this).attr("disabled", "disabled");
+      oneStepButton.attr("disabled", "disabled");
+      pauseButton.removeAttr("disabled");
+      epidemy.run();
+    }
   });
-  stopButton.click(function() {
+  pauseButton.click(function() {
+    event.preventDefault();
     startButton.removeAttr("disabled");
-    epidemy.stop();
+    oneStepButton.removeAttr("disabled");
+    pauseButton.attr("disabled", "disabled");
+    epidemy.pause();
   });
   oneStepButton.click(function() {
+    event.preventDefault();
     epidemy.nextStep();
   });
+  exportImageButton.click(function() {
+    event.preventDefault();
+    epidemy.exportImage();
+  });
+  startButton.tooltip();
+  pauseButton.tooltip();
+  oneStepButton.tooltip();
+  exportImageButton.tooltip();
   $("#picture").click(function(e){
     epidemy.infectedUpdated(e);
   });
-  $("#picture").mouseenter(function(e){
-    $("#help").html("Please click on the map to select the region as infected.");
+  $("#ep1").click(function() {
+    event.preventDefault();
+    config.loadPreloaded(1);
   });
-  $("#picture").mouseleave(function(e){
-    $("#help").html("");
+  $("#ep2").click(function() {
+    event.preventDefault();
+    config.loadPreloaded(2);
   });
-  $("#exportImage").click(function() {
-    epidemy.exportImage();
+  $("#ep3").click(function() {
+    event.preventDefault();
+    config.loadPreloaded(3);
   });
+  $("#configuration").submit(function(event) {
+    event.preventDefault();
+    config.loadFromForm();
+  });
+  config.loadPreloaded(1);
 });
 

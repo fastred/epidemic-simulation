@@ -3,33 +3,96 @@
 <head>
 <meta charset="utf-8" />
 <title>Epidemia</title>
-<!--<link href="css/main.css" rel="stylesheet" type="text/css">-->
-<style>
-body { font: 11px Tahoma; }
-</style>
+<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+<link href="css/main.css" rel="stylesheet" type="text/css">
 <script type="text/javascript" src="js/polish_data.js"></script>
 <script type="text/javascript" src="js/jquery-1.8.2.min.js"></script>
 <script type="text/javascript" src="js/underscore-min.js"></script>
 <script type="text/javascript" src="js/jquery.flot.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
 <script type="text/javascript" src="js/app.js"></script> 
 </head>
 <body>
+<div class="container">
+  <h1 style="text-align: center;">Epidemic simulation</h1>
+  <p class="lead" style="font-size: 18px;">
+  Please click on the map to mark the regions as infected. Then use buttons under a map
+  to control the simulation.
+  </p>
+  <div class="row">
+    <div class="span6">
+      <div style="height: 360px;">
+        <canvas id="picture" width="400" height="360" style="position: absolute;"></canvas>
+        <img id="poland_map" src="poland_small.png" />
+      </div>
+      <div class="btn-toolbar" style="text-align: center">
+        <div class="btn-group">
 
-<button id="start">start</button><br />
-<button id="stop">pause</button><br />
-<button id="oneStep">oneStep</button><br />
-<button id="exportImage">export as image</button><br />
-<div id="help" style="position: absolute; top: 240px; left: 400px; font-size: 18px; width: 300px;"></div>
+          <a class="btn" id="start" href="#" title="Start simulation"><i class="icon-play"></i></a>
+          <a class="btn" id="pause" href="#" title="Pause" disabled="disabled"><i class="icon-pause"></i></a>
+          <a class="btn" id="oneStep" href="#" title="One step forward"><i class="icon-step-forward"></i></a>
+          <a class="btn" id="exportImage" href="#" title="Export as a picture"><i class="icon-picture"></i></a>
+        </div>
+      </div>
+      <div id="iteration"></div>
+      <div id="values"></div>
+    </div>
+    <div class="span6">
+      You can select one of the provided epidemics:
+      <ul>
+        <li><a href="#" id="ep1">Influenza</a> (default)</li>
+        <li><a href="#" id="ep2">Smallpox</a></li>
+        <li><a href="#" id="ep3">Zombie</a></li>
+      </ul>
+      or make your own:
+      <legend></legend>
+      <form id="configuration" method="post">
+        <div class="row">
+          <div class="span3">
+            <label>Immigration rate</label>
+            <input required="required" type="number" id="immigrationRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Birth rate</label>
+            <input required="required" type="number" id="birthRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Natural death rate</label>
+            <input required="required" type="number" id="naturalDeathRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Virus morbidity</label>
+            <input required="required" type="number" id="virusMorbidity" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <button type="submit" class="btn btn-primary">Save configuration</button>
+          </div>
+          <div class="span3">
+            <label>Vectored infection rate</label>
+            <input required="required" type="number" id="vectoredInfectionRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Contact infection rate</label>
+            <input required="required" type="number" id="contactInfectionRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Recovery rate</label>
+            <input required="required" type="number" id="recoveryRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Recovery improvement</label>
+            <input required="required" type="number" id="recoveryImprovement" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+          </div>
+        </div>
+      <form>
+        <fieldset>
+        </fieldset>
+      </form>
+    </div>
+    <div class="span3">
+      <form>
+        <fieldset>
+        </fieldset>
+      </form>
 
-<div style="height: 360px;">
-  <canvas id="picture" width="400" height="360" style="position: absolute;"></canvas>
-  <img id="poland_map" src="poland_small.png" />
+      <!--<button id="start">start</button><br />-->
+      <!--<button id="stop">pause</button><br />-->
+      <!--<button id="oneStep">oneStep</button><br />-->
+      <!--<button id="exportImage">export as image</button><br />-->
+    </div>
+  </div>
+  <div id="plot" style="width:940px;height:150px"></div>
+  <p>
+  Map image source: http://mapa.zumi.pl/
+  </p>
 </div>
-<div id="iteration"></div>
-<div id="values"></div>
-<div id="plot" style="width:600px;height:300px"></div>
-<p>
-Map image source: http://mapa.zumi.pl/
-</p>
+
+
 </body>
 </html>
