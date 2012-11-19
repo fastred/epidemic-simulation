@@ -1,9 +1,3 @@
-// Shuffles array
-shuffle = function(o){ //v1.0
-  for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-  return o;
-};
-
 function makeArrayOf(value, length) {
   var arr = [], i = length;
   while (i--) {
@@ -11,6 +5,7 @@ function makeArrayOf(value, length) {
   }
   return arr;
 }
+
 //# Cell class
 // This class represents one cell in the grid.
 // It contains three values:
@@ -149,11 +144,9 @@ function Grid(_config) {
   // 4. Move people to all neighbouring cell
   // 5. Repeat until all cells were chosen
   this.simImmigrations = function() {
-    var randIndexes = _.map(cells, function(val, key){ return key});
-    randIndexes = shuffle(randIndexes);
-    for(i = 0; i < randIndexes.length; i++) {
-      var neighbours = this.getNeighbours(randIndexes[i]);
-      var currCell = cells[randIndexes[i]];
+    for(i = 0; i < cellsCount; i++) {
+      var neighbours = this.getNeighbours(i);
+      var currCell = cells[i];
       var toMove = Math.round(config.immigrationRate *
                               currCell.populationCount / neighbours.length);
       var toMoveInfected = Math.round(config.immigrationRate *
