@@ -231,21 +231,29 @@ function Grid(_config) {
     }
   }
 
-  // constructor
-  var avg = 26000;
-  for(i = 0; i < cellsCount; i++) {
-    cells[i] = new Cell(avg, 0, avg * 2.5);
+  this.resetCells = function() {
+    cells = new Array(cellsCount);
+    this.init();
   }
-  _.each(emptyCells, function(num) {
-    cells[num].populationCount = 0;
-    cells[num].infectedCount = 0;
-    cells[num].populationLimit = 0;
-  }, this);
-  _.each(citiesPopulation, function(value, key) {
-    cells[key].populationCount = value * 1000;
-    cells[key].populationLimit = value * 1000 * 2.5;
-  }, this);
-  this.updateOverallCount();
+
+  this.init = function() {
+    // constructor
+    var avg = 26000;
+    for(i = 0; i < cellsCount; i++) {
+      cells[i] = new Cell(avg, 0, avg * 2.5);
+    }
+    _.each(emptyCells, function(num) {
+      cells[num].populationCount = 0;
+      cells[num].infectedCount = 0;
+      cells[num].populationLimit = 0;
+    }, this);
+    _.each(citiesPopulation, function(value, key) {
+      cells[key].populationCount = value * 1000;
+      cells[key].populationLimit = value * 1000 * 2.5;
+    }, this);
+    this.updateOverallCount();
+  }
+  this.init();
 }
 
 // # Picture class
@@ -489,6 +497,7 @@ $(document).ready(function(){
   var exportImageButton = $("#exportImage");
   var saveStateButton = $("#saveState");
   var loadStateButton = $("#loadState");
+  var restartButton = $("#restart");
   startButton.click(function(event) {
     event.preventDefault();
     if (!epidemy.running) {
@@ -559,6 +568,14 @@ $(document).ready(function(){
     $(this).parent().remove();
     delete localStorage[id];
   });
+  restartButton.click(function(event) {
+    epidemy.grid.resetCells();
+    epidemy.iterationNumber = 0;
+    epidemy.plot.historyOverall = new Array();
+    epidemy.plot.historyInfected = new Array();
+    epidemy.plot.refresh();
+    epidemy.init();
+  });
 
   startButton.tooltip();
   pauseButton.tooltip();
@@ -566,6 +583,8 @@ $(document).ready(function(){
   exportImageButton.tooltip();
   saveStateButton.tooltip();
   loadStateButton.tooltip();
+  restartButton.tooltip();
+
   $("#picture").click(function(event){
     epidemy.infectedUpdated(event);
   });
