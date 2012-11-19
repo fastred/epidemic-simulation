@@ -410,7 +410,7 @@ $(document).ready(function(){
     run: function() {
       this.running = true
       var that = this;
-      this.interval = setInterval(function() { that.nextStep()}, 100 );
+      this.interval = setInterval(function() { that.nextStep()}, 50 );
     },
     showStats: function() {
       $("#iteration").html("Day: " + this.iterationNumber);
