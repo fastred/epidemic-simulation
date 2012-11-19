@@ -489,6 +489,11 @@ $(document).ready(function(){
   $("#configuration").submit(function(event) {
     event.preventDefault();
     config.loadFromForm();
+    var info = $("#configSaveInfo");
+    info.html("saved");
+    setTimeout(function () {
+      info.html("");
+    }, 1500);
   });
   config.loadPreloaded(1);
 });
