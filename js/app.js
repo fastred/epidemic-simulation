@@ -14,6 +14,14 @@ function supports_html5_storage() {
   }
 }
 
+function showAlert(msg) {
+  $("#alertText").html(msg);
+  $(".alert").show();
+  setTimeout(function () {
+    $(".alert").hide();
+  }, 2000);
+}
+
 //# Cell class
 // This class represents one cell in the grid.
 // It contains three values:
@@ -514,7 +522,7 @@ $(document).ready(function(){
     state["historyInfected"] = epidemy.plot.historyInfected;
     state["config"] = config;
     localStorage[id] = JSON.stringify(state);
-    console.log(localStorage.length);
+    showAlert("State has been saved.");
   });
   // Show modal window for selecting saved state.
   loadStateButton.click(function(event) {
@@ -556,6 +564,7 @@ $(document).ready(function(){
     epidemy.plot.historyInfected = new Array();
     epidemy.plot.refresh();
     epidemy.init();
+    showAlert("Simulation has been restarted.");
   });
 
   startButton.tooltip();
@@ -584,12 +593,9 @@ $(document).ready(function(){
   $("#configuration").submit(function(event) {
     event.preventDefault();
     config.loadFromForm();
-    var info = $("#configSaveInfo");
-    info.html("saved");
-    setTimeout(function () {
-      info.html("");
-    }, 1500);
+    showAlert("Configuration has been saved.");
   });
+  // Load default epidemic
   config.loadPreloaded(1);
 });
 
