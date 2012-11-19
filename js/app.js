@@ -91,7 +91,6 @@ function Grid(_config) {
   var cellsCount = rowsCount * colsCount;
   var cells = new Array(cellsCount);
   var config = _config;
-  var avg = 26000;
   var populationOverallCount = 0;
   var infectedOverallCount = 0;
 
@@ -223,6 +222,8 @@ function Grid(_config) {
     this.updateOverallCount();
   }
 
+  // constructor
+  var avg = 26000;
   for(i = 0; i < cellsCount; i++) {
     cells[i] = new Cell(avg, 0, avg * 2.5);
   }
@@ -233,7 +234,7 @@ function Grid(_config) {
   }, this);
   _.each(citiesPopulation, function(value, key) {
     cells[key].populationCount = value * 1000;
-    cells[key].populationLimit = value * 1000 * 3;
+    cells[key].populationLimit = value * 1000 * 2.5;
   }, this);
   this.updateOverallCount();
 }
