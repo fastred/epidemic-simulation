@@ -566,15 +566,6 @@ $(document).ready(function(){
     epidemy.init();
     showAlert("Simulation has been restarted.");
   });
-
-  startButton.tooltip();
-  pauseButton.tooltip();
-  oneStepButton.tooltip();
-  exportImageButton.tooltip();
-  saveStateButton.tooltip();
-  loadStateButton.tooltip();
-  restartButton.tooltip();
-
   $("#picture").click(function(event){
     epidemy.infectedUpdated(event);
   });
