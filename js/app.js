@@ -369,6 +369,9 @@ function Plot() {
 // # Configuration class
 function Configuration() {
 
+  var params = ["immigrationRate", "birthRate", "naturalDeathRate",
+    "virusMorbidity", "vectoredInfectionRate", "contactInfectionRate",
+    "recoveryRate", "recoveryImprovement"];
   // Calculates new recovery rate if the recovery improvement is set.
   this.updateRecoveryRate = function() {
     this.recoveryRate *= 1 + this.recoveryImprovement;
@@ -381,67 +384,45 @@ function Configuration() {
   }
 
   this.loadPreloaded = function(id) {
+    var values;
     if (id == 1) {
       // influenza
-      this.immigrationRate = 0.05;
-      this.birthRate = 0.0101;
-      this.naturalDeathRate = 0.01;
-      this.virusMorbidity = 0.01;
-      this.vectoredInfectionRate = 0.4;
-      this.contactInfectionRate = 0.7;
-      this.recoveryRate = 0.2;
-      this.recoveryImprovement = 0.008;
+      values = [0.01, 0.0001, 0.0001, 0.001, 0.3, 0.6, 0.1, 0.008];
     } else if(id == 2) {
       // smallpox
-      this.immigrationRate = 0.02;
-      this.birthRate = 0.0101;
-      this.naturalDeathRate = 0.01;
-      this.virusMorbidity = 0.01;
-      this.vectoredInfectionRate = 0.4;
-      this.contactInfectionRate = 0.7;
-      this.recoveryRate = 0.2;
-      this.recoveryImprovement = 0.008;
+      values = [0.01, 0.0001, 0.0001, 0.005, 0.3, 0.6, 0.1, 0.01];
     } else if(id == 3) {
       // zombie
-      this.immigrationRate = 0.2;
-      this.birthRate = 0.0101;
-      this.naturalDeathRate = 0.01;
-      this.virusMorbidity = 0.001;
-      this.vectoredInfectionRate = 0;
-      this.contactInfectionRate = 0.5;
-      this.recoveryRate = 0.1;
-      this.recoveryImprovement = 0.00;
+      values = [0.2, 0.0001, 0.0001, 0.005, 0, 0.06, 0.01, 0];
+    }
+    for(var id in params) {
+      var param = params[id];
+      this[param] = values[id];
     }
     this.refreshForm();
   }
 
   this.loadFromForm = function() {
-    this.immigrationRate = parseFloat($("#immigrationRate").val());
-    this.birthRate = parseFloat($("#birthRate").val());
-    this.naturalDeathRate = parseFloat($("#naturalDeathRate").val());
-    this.virusMorbidity = parseFloat($("#virusMorbidity").val());
-    this.vectoredInfectionRate = parseFloat($("#vectoredInfectionRate").val());
-    this.contactInfectionRate = parseFloat($("#contactInfectionRate").val());
-    this.recoveryRate = parseFloat($("#recoveryRate").val());
-    this.recoveryImprovement = parseFloat($("#recoveryImprovement").val());
+    for (var id in params) {
+      var param = params[id];
+      this[param] = parseFloat($("#" + param).val());
+    }
   }
 
   this.loadState = function(loaded) {
-    for (var prop in loaded) {
-      this[prop] = loaded[prop];
+    for (var id in params) {
+      var param = params[id];
+      this[param] = loaded[param];
     }
     this.refreshForm();
   }
 
   this.refreshForm = function() {
-    $("#immigrationRate").val(this.immigrationRate);
-    $("#birthRate").val(this.birthRate);
-    $("#naturalDeathRate").val(this.naturalDeathRate);
-    $("#virusMorbidity").val(this.virusMorbidity);
-    $("#vectoredInfectionRate").val(this.vectoredInfectionRate);
-    $("#contactInfectionRate").val(this.contactInfectionRate);
-    $("#recoveryRate").val(this.recoveryRate);
-    $("#recoveryImprovement").val(this.recoveryImprovement);
+    for (var id in params) {
+      var param = params[id];
+      this.param = parseFloat($("#" + param).val());
+      $("#" + param).val(this[param]);
+    }
   }
 };
 
