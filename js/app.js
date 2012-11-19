@@ -413,11 +413,7 @@ $(document).ready(function(){
       this.interval = setInterval(function() { that.nextStep()}, 100 );
     },
     showStats: function() {
-      $("#iteration").html("Iteration: " + this.iterationNumber);
-      $("#values").html("Population overall: " + grid.populationOverallCount +
-      "<br />Infected overall: " + grid.infectedOverallCount +
-      "<br />Infected percentage: " + (grid.infectedOverallCount /
-                                       grid.populationOverallCount));
+      $("#iteration").html("Day: " + this.iterationNumber);
     },
     nextStep: function() {
       this.grid.next();
