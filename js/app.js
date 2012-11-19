@@ -169,7 +169,7 @@ function Grid(_config) {
     var randIndexes = _.map(cells, function(val, key){ return key});
     randIndexes = shuffle(randIndexes);
     for(i = 0; i < randIndexes.length; i++) {
-      var neighbours = this.getNeighbours(randIndexes[i]);
+      var neighbours = shuffle(this.getNeighbours(randIndexes[i]));
       var currCell = cells[randIndexes[i]];
       var toMove = Math.round(config.immigrationRate *
                               currCell.populationCount / neighbours.length);
