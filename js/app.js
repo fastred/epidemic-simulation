@@ -252,7 +252,7 @@ function Picture(_cols, _rows) {
   var sizeX = canvas.width/colsCount;
   var sizeY = canvas.height/rowsCount;
   // used for checking if new color of the cell is the same as previous one
-  var colorHistory = makeArrayOf(-1, colsCount * rowsCount);
+  //var percentageHistory = makeArrayOf(-1, colsCount * rowsCount);
 
   this.getCellPosition = function(pageX, pageY) {
     var x = (pageX - $("#picture").offset().left);
@@ -268,24 +268,17 @@ function Picture(_cols, _rows) {
   }
 
   this.updateWithNewData = function(cells) {
-    var sizeX = canvasWidth/colsCount;
-    var sizeY = canvasHeight/rowsCount;
-
     for(i = 0; i < cellsCount; i++) {
-      var color = cells[i].infectedCount / cells[i].populationCount;
-      if (colorHistory[i] != color) {
-        if (cells[i].populationLimit == 0) {
-          ctx.fillStyle = "rgb(100,100,100)";
-        } else {
-          //ctx.fillStyle = "hsl(0,100%," + color + "%)";
-          ctx.fillStyle = "rgba(255,0,0," + color + ")";
-          ctx.clearRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
-                        sizeY, sizeX, sizeY);
-          ctx.fillRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
-                       sizeY, sizeX, sizeY);
-        }
+      //if (percentage != percentageHistory[i] && cells[i].populationLimit > 0) {
+      if (cells[i].populationLimit > 0) {
+        var percentage = cells[i].infectedCount / cells[i].populationCount;
+        ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
+        ctx.clearRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
+                      sizeY, sizeX, sizeY);
+        ctx.fillRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
+                     sizeY, sizeX, sizeY);
+        //percentageHistory[i] = percentage;
       }
-      colorHistory[i] = color;
     }
   }
 
