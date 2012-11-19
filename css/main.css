@@ -1,0 +1,5 @@
+.alert { position: fixed; }
+.text-center { text-align: center; }
+.lead { font-size: 18px; }
+#picture { position: absolute; }
+#plot { width: 940px; height: 200px; }
