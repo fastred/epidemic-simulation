@@ -620,8 +620,8 @@ $(document).ready(function(){
       output.html("<li>You don't have any saved models!</li>");
     } else {
       output.html("");
-      for (var prop in localStorage) {
-        output.append('<li><a href="#" class="loadStateLink">' + prop + '</a>' +
+      for (var id in list) {
+        output.append('<li><a href="#" class="loadStateLink">' + list[id] + '</a>' +
                     '<a class="btn btn-mini btn-danger stateDelete" href="#">' +
                     'delete</a></li>');
       }
