@@ -1,8 +1,14 @@
 // Shuffles array
-shuffle = function(o){ //v1.0
-  for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-  return o;
-};
+function shuffle(array) {
+    var tmp, current, top = array.length;
+    if(top) while(--top) {
+      current = Math.floor(Math.random() * (top + 1));
+      tmp = array[current];
+      array[current] = array[top];
+      array[top] = tmp;
+    }
+    return array;
+}
 
 function makeArrayOf(value, length) {
   var arr = [], i = length;
