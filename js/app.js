@@ -469,8 +469,8 @@ $(document).ready(function(){
   var config = new Configuration();
   var grid = new Grid(config);
   var picture = new Picture(grid.colsCount, grid.rowsCount);
-  // # epidemy object
-  var epidemy = {
+
+  var epidemic = {
     grid: grid,
     iterationNumber: 0,
     running: false,
@@ -505,7 +505,7 @@ $(document).ready(function(){
       this.showStats();
     }
   };
-  epidemy.init();
+  epidemic.init();
 
   // # Events.
   var startButton = $("#start");
@@ -517,11 +517,11 @@ $(document).ready(function(){
   var restartButton = $("#restart");
   startButton.click(function(event) {
     event.preventDefault();
-    if (!epidemy.running) {
+    if (!epidemic.running) {
       $(this).attr("disabled", "disabled");
       oneStepButton.attr("disabled", "disabled");
       pauseButton.removeAttr("disabled");
-      epidemy.run();
+      epidemic.run();
     }
   });
   pauseButton.click(function(event) {
@@ -529,11 +529,11 @@ $(document).ready(function(){
     startButton.removeAttr("disabled");
     oneStepButton.removeAttr("disabled");
     pauseButton.attr("disabled", "disabled");
-    epidemy.pause();
+    epidemic.pause();
   });
   oneStepButton.click(function(event) {
     event.preventDefault();
-    epidemy.nextStep();
+    epidemic.nextStep();
   });
   exportImageButton.click(function(event) {
     event.preventDefault();
@@ -544,10 +544,10 @@ $(document).ready(function(){
     if (!supports_html5_storage()) { return false; }
     var id = (new Date()).toGMTString();
     var state = {}
-    state["cells"] = epidemy.grid.cells;
-    state["iterationNumber"] = epidemy.iterationNumber;
-    state["historyOverall"] = epidemy.plot.historyOverall;
-    state["historyInfected"] = epidemy.plot.historyInfected;
+    state["cells"] = epidemic.grid.cells;
+    state["iterationNumber"] = epidemic.iterationNumber;
+    state["historyOverall"] = epidemic.plot.historyOverall;
+    state["historyInfected"] = epidemic.plot.historyInfected;
     state["config"] = config;
     localStorage[id] = JSON.stringify(state);
     showAlert("State has been saved.");
@@ -571,13 +571,13 @@ $(document).ready(function(){
     $('#savesList').modal('hide')
     var id = $(this).text();
     var state = JSON.parse(localStorage[id]);
-    epidemy.grid.loadState(state.cells);
-    epidemy.iterationNumber = state.iterationNumber;
-    epidemy.plot.historyOverall = state["historyOverall"];
-    epidemy.plot.historyInfected = state["historyInfected"];
+    epidemic.grid.loadState(state.cells);
+    epidemic.iterationNumber = state.iterationNumber;
+    epidemic.plot.historyOverall = state["historyOverall"];
+    epidemic.plot.historyInfected = state["historyInfected"];
     config.loadState(state["config"]);
-    epidemy.plot.refresh();
-    epidemy.init();
+    epidemic.plot.refresh();
+    epidemic.init();
   });
   // Deletes saved state.
   $(".stateDelete").live("click", function(event) {
@@ -586,16 +586,16 @@ $(document).ready(function(){
     delete localStorage[id];
   });
   restartButton.click(function(event) {
-    epidemy.grid.resetCells();
-    epidemy.iterationNumber = 0;
-    epidemy.plot.historyOverall = new Array();
-    epidemy.plot.historyInfected = new Array();
-    epidemy.plot.refresh();
-    epidemy.init();
+    epidemic.grid.resetCells();
+    epidemic.iterationNumber = 0;
+    epidemic.plot.historyOverall = new Array();
+    epidemic.plot.historyInfected = new Array();
+    epidemic.plot.refresh();
+    epidemic.init();
     showAlert("Simulation has been restarted.");
   });
   $("#picture").click(function(event){
-    epidemy.infectedUpdated(event);
+    epidemic.infectedUpdated(event);
   });
   $("#ep1").click(function(event) {
     event.preventDefault();
