@@ -602,17 +602,10 @@ $(document).ready(function(){
   $("#picture").click(function(event){
     epidemic.infectedUpdated(event);
   });
-  $("#ep1").click(function(event) {
+  $("#providedEpidemics a").click(function(event) {
     event.preventDefault();
-    config.loadPreloaded(1);
-  });
-  $("#ep2").click(function(event) {
-    event.preventDefault();
-    config.loadPreloaded(2);
-  });
-  $("#ep3").click(function(event) {
-    event.preventDefault();
-    config.loadPreloaded(3);
+    config.loadPreloaded($(this).data("id"));
+    showAlert("Settings for " + $(this).text() + " epidemic have been loaded.");
   });
   $("#configuration").submit(function(event) {
     event.preventDefault();
