@@ -589,6 +589,7 @@ $(document).ready(function(){
     epidemic.nextStep();
   });
   restartButton.click(function(event) {
+    event.preventDefault();
     epidemic.restart();
     showAlert("Simulation has been restarted.");
   });
@@ -598,6 +599,7 @@ $(document).ready(function(){
   });
   // Saves state.
   saveStateButton.click(function(event) {
+    event.preventDefault();
     if (!supports_html5_storage()) {
       showAlert("Your browser doesn't support local storage.");
       return false;
@@ -610,6 +612,7 @@ $(document).ready(function(){
   });
   // Show modal window for selecting saved state.
   loadStateButton.click(function(event) {
+    event.preventDefault();
     if (!supports_html5_storage()) {
       showAlert("Your browser doesn't support local storage.");
       return false;
@@ -629,6 +632,7 @@ $(document).ready(function(){
   });
   // Loads state selected from the list.
   $(".loadStateLink").live("click", function(event) {
+    event.preventDefault();
     $('#savesList').modal('hide');
     var id = $(this).text();
     if (epidemic.load(id)) {
@@ -639,6 +643,7 @@ $(document).ready(function(){
   });
   // Deletes saved state.
   $(".stateDelete").live("click", function(event) {
+    event.preventDefault();
     var id = $(this).prev().text();
     epidemic.deleteSavedState(id);
     $(this).parent().remove();
