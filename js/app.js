@@ -546,7 +546,10 @@ $(document).ready(function(){
   });
   // Saves state.
   saveStateButton.click(function(event) {
-    if (!supports_html5_storage()) { return false; }
+    if (!supports_html5_storage()) {
+      showAlert("Your browser doesn't support local storage.");
+      return false;
+    }
     var id = (new Date()).toGMTString();
     var state = {}
     state["cells"] = epidemic.grid.cells;
@@ -554,8 +557,12 @@ $(document).ready(function(){
     state["historyOverall"] = epidemic.plot.historyOverall;
     state["historyInfected"] = epidemic.plot.historyInfected;
     state["config"] = config;
-    localStorage[id] = JSON.stringify(state);
-    showAlert("State has been saved.");
+    try {
+      localStorage[id] = JSON.stringify(state);
+      showAlert("State has been saved.");
+    } catch (e) {
+      showAlert("Storage limit excedeed. Please delete old states.");
+    }
   });
   // Show modal window for selecting saved state.
   loadStateButton.click(function(event) {
