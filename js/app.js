@@ -460,11 +460,13 @@ function Configuration() {
       $("#" + param).val(this[param]);
     }
   }
+
+  // constructor
+  this.loadPreloaded(1);
 };
 
 $(document).ready(function(){
-  // TODO: change to var
-  config = new Configuration();
+  var config = new Configuration();
   var grid = new Grid(config);
   var picture = new Picture(grid.colsCount, grid.rowsCount);
   // # epidemy object
@@ -612,7 +614,5 @@ $(document).ready(function(){
     config.loadFromForm();
     showAlert("Configuration has been saved.");
   });
-  // Load default epidemic
-  config.loadPreloaded(1);
 });
 
