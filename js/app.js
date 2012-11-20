@@ -465,47 +465,52 @@ function Configuration() {
   this.loadPreloaded(1);
 };
 
+function Epidemic(_config, _grid, _picture) {
+  this.init = function() {
+    this.picture.updateWithNewData(this.grid.cells);
+  }
+  this.run = function() {
+    this.running = true
+    var that = this;
+    this.interval = setInterval(function() { that.nextStep()}, 50 );
+  }
+  this.showStats = function() {
+    $("#iteration").html("Day: " + this.iterationNumber);
+  }
+  this.nextStep = function() {
+    this.grid.next();
+    this.picture.updateWithNewData(this.grid.cells);
+    this.plot.updateWithNewData(this.grid.populationOverallCount, this.grid.infectedOverallCount);
+    this.iterationNumber++;
+    this.showStats();
+  }
+  this.pause = function() {
+    this.running = false;
+    clearInterval(this.interval);
+  }
+  this.infectedUpdated = function(event) {
+    var pos = this.picture.getClickedCellPosition(event);
+    this.grid.setAsInfected(pos.index);
+    this.picture.setAsInfected(pos.index, pos.row, pos.col);
+    this.showStats();
+  }
+  this.config = _config;
+  this.grid = _grid;
+  this.picture = _picture;
+  this.iterationNumber = 0;
+  this.running = false;
+  this.plot = new Plot();
+  this.init();
+
+}
+
+
 $(document).ready(function(){
   var config = new Configuration();
   var grid = new Grid(config);
   var picture = new Picture(grid.colsCount, grid.rowsCount);
 
-  var epidemic = {
-    grid: grid,
-    iterationNumber: 0,
-    running: false,
-    picture: picture,
-    plot: new Plot(),
-    init: function() {
-      this.picture.updateWithNewData(grid.cells);
-    },
-    run: function() {
-      this.running = true
-      var that = this;
-      this.interval = setInterval(function() { that.nextStep()}, 50 );
-    },
-    showStats: function() {
-      $("#iteration").html("Day: " + this.iterationNumber);
-    },
-    nextStep: function() {
-      this.grid.next();
-      this.picture.updateWithNewData(grid.cells);
-      this.plot.updateWithNewData(grid.populationOverallCount, grid.infectedOverallCount);
-      this.iterationNumber++;
-      this.showStats();
-    },
-    pause: function() {
-      this.running = false;
-      clearInterval(this.interval);
-    },
-    infectedUpdated: function(event) {
-      var pos = this.picture.getClickedCellPosition(event);
-      this.grid.setAsInfected(pos.index);
-      this.picture.setAsInfected(pos.index, pos.row, pos.col);
-      this.showStats();
-    }
-  };
-  epidemic.init();
+  var epidemic = new Epidemic(config, grid, picture);
 
   // # Events.
   var startButton = $("#start");
