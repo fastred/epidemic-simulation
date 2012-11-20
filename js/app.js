@@ -617,7 +617,7 @@ $(document).ready(function(){
   $("#configuration").submit(function(event) {
     event.preventDefault();
     config.loadFromForm();
-    showAlert("Configuration has been saved.");
+    showAlert("Settings have been saved.");
   });
 });
 
