@@ -446,12 +446,13 @@ $(document).ready(function(){
   // TODO: change to var
   config = new Configuration();
   var grid = new Grid(config);
+  var picture = new Picture(grid.colsCount, grid.rowsCount);
   // # epidemy object
   var epidemy = {
     grid: grid,
     iterationNumber: 0,
     running: false,
-    picture: new Picture(grid.colsCount, grid.rowsCount),
+    picture: picture,
     plot: new Plot(),
     init: function() {
       this.picture.updateWithNewData(grid.cells);
@@ -480,9 +481,6 @@ $(document).ready(function(){
       this.grid.setAsInfected(pos.index);
       this.picture.setAsInfected(pos.index, pos.row, pos.col);
       this.showStats();
-    },
-    exportImage: function() {
-      this.picture.exportImage();
     }
   };
   epidemy.init();
@@ -517,7 +515,7 @@ $(document).ready(function(){
   });
   exportImageButton.click(function(event) {
     event.preventDefault();
-    epidemy.exportImage();
+    picture.exportImage();
   });
   // Saves state.
   saveStateButton.click(function(event) {
