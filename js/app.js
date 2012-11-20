@@ -394,6 +394,24 @@ function Configuration() {
   var params = ["immigrationRate", "birthRate", "naturalDeathRate",
     "virusMorbidity", "vectoredInfectionRate", "contactInfectionRate",
     "recoveryRate", "recoveryImprovement"];
+
+  // Generate getters and setters
+  for(id in params) {
+    var param = params[id];
+    this[param] = function() {
+      return this[param];
+    };
+    // Create a new setter for the property
+    this[param] = function(val) {
+      if (val > 1) {
+        val = 1;
+      } else if (val < 0) {
+        val = 0;
+      }
+      this[param] = val;
+    };
+  }
+
   // Calculates new recovery rate if the recovery improvement is set.
   this.updateRecoveryRate = function() {
     this.recoveryRate *= 1 + this.recoveryImprovement;
