@@ -502,6 +502,47 @@ function Epidemic(_config, _grid, _picture) {
     this.plot.refresh();
     this.init();
   }
+  this.save = function() {
+    var id = (new Date()).toGMTString();
+    var state = {}
+    state["cells"] = this.grid.cells;
+    state["iterationNumber"] = this.iterationNumber;
+    state["historyOverall"] = this.plot.historyOverall;
+    state["historyInfected"] = this.plot.historyInfected;
+    state["config"] = this.config;
+    try {
+      localStorage[id] = JSON.stringify(state);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  this.savedStatesList = function() {
+    var list = [];
+    for (var prop in localStorage) {
+      list.push(prop);
+    }
+    return list;
+  }
+  this.load = function(id) {
+    try {
+      var state = JSON.parse(localStorage[id]);
+      this.grid.loadState(state.cells);
+      this.iterationNumber = state.iterationNumber;
+      this.plot.historyOverall = state["historyOverall"];
+      this.plot.historyInfected = state["historyInfected"];
+      this.config.loadState(state["config"]);
+      this.plot.refresh();
+      this.init();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  this.deleteSavedState = function(id) {
+    delete localStorage[id];
+  }
+
   this.config = _config;
   this.grid = _grid;
   this.picture = _picture;
@@ -509,7 +550,6 @@ function Epidemic(_config, _grid, _picture) {
   this.running = false;
   this.plot = new Plot();
   this.init();
-
 }
 
 
@@ -562,52 +602,46 @@ $(document).ready(function(){
       showAlert("Your browser doesn't support local storage.");
       return false;
     }
-    var id = (new Date()).toGMTString();
-    var state = {}
-    state["cells"] = epidemic.grid.cells;
-    state["iterationNumber"] = epidemic.iterationNumber;
-    state["historyOverall"] = epidemic.plot.historyOverall;
-    state["historyInfected"] = epidemic.plot.historyInfected;
-    state["config"] = config;
-    try {
-      localStorage[id] = JSON.stringify(state);
+    if (epidemic.save()) {
       showAlert("State has been saved.");
-    } catch (e) {
+    } else {
       showAlert("Storage limit excedeed. Please delete old states.");
     }
   });
   // Show modal window for selecting saved state.
   loadStateButton.click(function(event) {
-    if (!supports_html5_storage()) { return false; }
-    var list = $("#loadStateList");
-    list.html("");
-    for (var prop in localStorage) {
-      list.append('<li><a href="#" class="loadStateLink">' + prop + '</a>' +
-                  '<a class="btn btn-mini btn-danger stateDelete" href="#">' +
-                  'delete</a></li>');
+    if (!supports_html5_storage()) {
+      showAlert("Your browser doesn't support local storage.");
+      return false;
     }
-    if (localStorage.length == 0) {
-      list.append("<li>You don't have any saved models!</li>");
+    var list = epidemic.savedStatesList();
+    var output = $("#loadStateList");
+    if (list.length == 0) {
+      output.html("<li>You don't have any saved models!</li>");
+    } else {
+      output.html("");
+      for (var prop in localStorage) {
+        output.append('<li><a href="#" class="loadStateLink">' + prop + '</a>' +
+                    '<a class="btn btn-mini btn-danger stateDelete" href="#">' +
+                    'delete</a></li>');
+      }
     }
   });
   // Loads state selected from the list.
   $(".loadStateLink").live("click", function(event) {
-    $('#savesList').modal('hide')
+    $('#savesList').modal('hide');
     var id = $(this).text();
-    var state = JSON.parse(localStorage[id]);
-    epidemic.grid.loadState(state.cells);
-    epidemic.iterationNumber = state.iterationNumber;
-    epidemic.plot.historyOverall = state["historyOverall"];
-    epidemic.plot.historyInfected = state["historyInfected"];
-    config.loadState(state["config"]);
-    epidemic.plot.refresh();
-    epidemic.init();
+    if (epidemic.load(id)) {
+      showAlert("State " + id + " has been loaded.");
+    } else {
+      showAlert("There was an error while loading your state!");
+    }
   });
   // Deletes saved state.
   $(".stateDelete").live("click", function(event) {
     var id = $(this).prev().text();
+    epidemic.deleteSavedState(id);
     $(this).parent().remove();
-    delete localStorage[id];
   });
   $("#picture").click(function(event){
     epidemic.infectedUpdated(event);
