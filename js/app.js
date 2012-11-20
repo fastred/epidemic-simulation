@@ -108,12 +108,11 @@ function Cell(populationCount, infectedCount, populationLimit) {
 
 // # Grid class
 // It represents grid of cells.
-function Grid(_config) {
+function Grid() {
   var rowsCount = 40;
   var colsCount = rowsCount;
   var cellsCount = rowsCount * colsCount;
   var cells = new Array(cellsCount);
-  var config = _config;
   var populationOverallCount = 0;
   var infectedOverallCount = 0;
 
@@ -171,7 +170,7 @@ function Grid(_config) {
   // neighbouring cell
   // 4. Move people to all neighbouring cell
   // 5. Repeat until all cells were chosen
-  this.simImmigrations = function() {
+  this.simImmigrations = function(config) {
     var randIndexes = _.map(cells, function(val, key){ return key});
     randIndexes = shuffle(randIndexes);
     for(i = 0; i < randIndexes.length; i++) {
@@ -198,7 +197,7 @@ function Grid(_config) {
   // Virus can be spread only when it's present in neighbouring cells.
   // Probability rises when percentage of people infected in the neighbourhood
   // rises. This probability is calculated before other steps.
-  this.calculateVectoredRates = function() {
+  this.calculateVectoredRates = function(config) {
     var vectoredRates = makeArrayOf(0, cellsCount);
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
@@ -218,9 +217,9 @@ function Grid(_config) {
   }
 
   // Performs next step in the simulation.
-  this.next = function() {
-    this.simImmigrations();
-    var vectoredRates = this.calculateVectoredRates();
+  this.next = function(config) {
+    this.simImmigrations(config);
+    var vectoredRates = this.calculateVectoredRates(config);
     // Simulates natural deaths, deaths caused by the virus and new births.
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
@@ -478,7 +477,7 @@ function Epidemic(_config, _grid, _picture) {
     $("#iteration").html("Day: " + this.iterationNumber);
   }
   this.nextStep = function() {
-    this.grid.next();
+    this.grid.next(this.config);
     this.picture.updateWithNewData(this.grid.cells);
     this.plot.updateWithNewData(this.grid.populationOverallCount, this.grid.infectedOverallCount);
     this.iterationNumber++;
