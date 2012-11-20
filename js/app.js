@@ -494,6 +494,14 @@ function Epidemic(_config, _grid, _picture) {
     this.picture.setAsInfected(pos.index, pos.row, pos.col);
     this.showStats();
   }
+  this.restart = function() {
+    this.grid.resetCells();
+    this.iterationNumber = 0;
+    this.plot.historyOverall = new Array();
+    this.plot.historyInfected = new Array();
+    this.plot.refresh();
+    this.init();
+  }
   this.config = _config;
   this.grid = _grid;
   this.picture = _picture;
@@ -539,6 +547,10 @@ $(document).ready(function(){
   oneStepButton.click(function(event) {
     event.preventDefault();
     epidemic.nextStep();
+  });
+  restartButton.click(function(event) {
+    epidemic.restart();
+    showAlert("Simulation has been restarted.");
   });
   exportImageButton.click(function(event) {
     event.preventDefault();
@@ -596,15 +608,6 @@ $(document).ready(function(){
     var id = $(this).prev().text();
     $(this).parent().remove();
     delete localStorage[id];
-  });
-  restartButton.click(function(event) {
-    epidemic.grid.resetCells();
-    epidemic.iterationNumber = 0;
-    epidemic.plot.historyOverall = new Array();
-    epidemic.plot.historyInfected = new Array();
-    epidemic.plot.refresh();
-    epidemic.init();
-    showAlert("Simulation has been restarted.");
   });
   $("#picture").click(function(event){
     epidemic.infectedUpdated(event);
