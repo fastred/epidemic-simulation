@@ -460,51 +460,52 @@ function Configuration() {
 
 function Epidemic(_config, _grid, _picture) {
   this.init = function() {
-    this.picture.updateWithNewData(this.grid.cells);
+    picture.updateWithNewData(grid.cells);
   }
   this.run = function() {
-    this.running = true
+    running = true
     var that = this;
     this.interval = setInterval(function() { that.nextStep()}, 50 );
   }
   this.showStats = function() {
-    $("#iteration").html("Day: " + this.iterationNumber + ", Population: " +
-                        this.grid.populationOverallCount +
-                        ", Infected population: " + this.grid.infectedOverallCount);
+    $("#iteration").html("Day: " + iterationNumber + ", Population: " +
+                        grid.populationOverallCount +
+                        ", Infected population: " + grid.infectedOverallCount);
   }
   this.nextStep = function() {
-    this.grid.next(this.config);
-    this.picture.updateWithNewData(this.grid.cells);
-    this.plot.updateWithNewData(this.grid.populationOverallCount, this.grid.infectedOverallCount);
-    this.iterationNumber++;
+    grid.next(config);
+    picture.updateWithNewData(grid.cells);
+    plot.updateWithNewData(grid.populationOverallCount, grid.infectedOverallCount);
+    iterationNumber++;
     this.showStats();
   }
   this.pause = function() {
-    this.running = false;
+    running = false;
     clearInterval(this.interval);
   }
   this.infectedUpdated = function(event) {
-    var pos = this.picture.getClickedCellPosition(event);
-    this.grid.setAsInfected(pos.index);
-    this.picture.setAsInfected(pos.index, pos.row, pos.col);
+    var pos = picture.getClickedCellPosition(event);
+    grid.setAsInfected(pos.index);
+    picture.setAsInfected(pos.index, pos.row, pos.col);
     this.showStats();
   }
   this.restart = function() {
-    this.grid.resetCells();
-    this.iterationNumber = 0;
-    this.plot.historyOverall = new Array();
-    this.plot.historyInfected = new Array();
-    this.plot.refresh();
+    grid.resetCells();
+    iterationNumber = 0;
+    plot.historyOverall = new Array();
+    plot.historyInfected = new Array();
+    plot.refresh();
     this.init();
+    this.showStats();
   }
   this.save = function() {
     var id = (new Date()).toGMTString();
     var state = {}
-    state["cells"] = this.grid.cells;
-    state["iterationNumber"] = this.iterationNumber;
-    state["historyOverall"] = this.plot.historyOverall;
-    state["historyInfected"] = this.plot.historyInfected;
-    state["config"] = this.config;
+    state["cells"] = grid.cells;
+    state["iterationNumber"] = iterationNumber;
+    state["historyOverall"] = plot.historyOverall;
+    state["historyInfected"] = plot.historyInfected;
+    state["config"] = config;
     try {
       localStorage[id] = JSON.stringify(state);
       return true;
@@ -522,13 +523,14 @@ function Epidemic(_config, _grid, _picture) {
   this.load = function(id) {
     try {
       var state = JSON.parse(localStorage[id]);
-      this.grid.loadState(state.cells);
-      this.iterationNumber = state.iterationNumber;
-      this.plot.historyOverall = state["historyOverall"];
-      this.plot.historyInfected = state["historyInfected"];
-      this.config.loadSavedSettings(state["config"]);
-      this.plot.refresh();
+      grid.loadState(state.cells);
+      iterationNumber = state.iterationNumber;
+      plot.historyOverall = state["historyOverall"];
+      plot.historyInfected = state["historyInfected"];
+      config.loadSavedSettings(state["config"]);
+      plot.refresh();
       this.init();
+      this.showStats();
       return true;
     } catch (e) {
       return false;
@@ -538,12 +540,12 @@ function Epidemic(_config, _grid, _picture) {
     delete localStorage[id];
   }
 
-  this.config = _config;
-  this.grid = _grid;
-  this.picture = _picture;
-  this.iterationNumber = 0;
-  this.running = false;
-  this.plot = new Plot();
+  var config = _config;
+  var grid = _grid;
+  var picture = _picture;
+  var iterationNumber = 0;
+  var running = false;
+  var plot = new Plot();
   this.init();
 }
 
