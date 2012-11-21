@@ -263,14 +263,9 @@ function Grid() {
     for(i = 0; i < cellsCount; i++) {
       cells[i] = new Cell(avg, 0, avg * 2.5);
     }
-    _.each(emptyCells, function(num) {
-      cells[num].populationCount = 0;
-      cells[num].infectedCount = 0;
-      cells[num].populationLimit = 0;
-    }, this);
-    _.each(citiesPopulation, function(value, key) {
-      cells[key].populationCount = value * 1000;
-      cells[key].populationLimit = value * 1000 * 2.5;
+    _.each(cellsPopulation, function(value, key) {
+      cells[key].populationCount = value;
+      cells[key].populationLimit = value * 2.5;
     }, this);
     this.updateOverallCount();
   }
@@ -321,8 +316,7 @@ function Picture(_cols, _rows) {
   }
 
   this.setAsInfected = function(index, col, row) {
-    // Don't color empty cells - complexity O(n), could be replaced by hash table
-    if ($.inArray(index, emptyCells) == -1) {
+    if (cellsPopulation[index] != 0) {
       ctx.fillStyle = "hsl(0,100%,50%)";
       ctx.fillRect(row * sizeX, col * sizeY, sizeX, sizeY);
     }
