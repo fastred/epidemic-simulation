@@ -468,7 +468,9 @@ function Epidemic(_config, _grid, _picture) {
     this.interval = setInterval(function() { that.nextStep()}, 50 );
   }
   this.showStats = function() {
-    $("#iteration").html("Day: " + this.iterationNumber);
+    $("#iteration").html("Day: " + this.iterationNumber + ", Population: " +
+                        this.grid.populationOverallCount +
+                        ", Infected population: " + this.grid.infectedOverallCount);
   }
   this.nextStep = function() {
     this.grid.next(this.config);
@@ -552,6 +554,7 @@ $(document).ready(function(){
   var picture = new Picture(grid.colsCount, grid.rowsCount);
 
   var epidemic = new Epidemic(config, grid, picture);
+  epidemic.showStats();
 
   // # Events.
   var startButton = $("#start");
