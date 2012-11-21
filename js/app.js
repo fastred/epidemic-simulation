@@ -412,7 +412,7 @@ function Configuration() {
     $("#recoveryRate").val(this.recoveryRate);
   }
 
-  this.loadPreloaded = function(id) {
+  this.loadPredefinedSettings = function(id) {
     var values;
     if (id == 1) {
       // influenza
@@ -428,25 +428,25 @@ function Configuration() {
       var param = params[id];
       this[param] = values[id];
     }
-    this.refreshForm();
+    this.pushSettingsToForm();
   }
 
-  this.loadFromForm = function() {
+  this.loadSettingsFromForm = function() {
     for (var id in params) {
       var param = params[id];
       this[param] = parseFloat($("#" + param).val());
     }
   }
 
-  this.loadState = function(loaded) {
+  this.loadSavedSettings = function(loaded) {
     for (var id in params) {
       var param = params[id];
       this[param] = loaded[param];
     }
-    this.refreshForm();
+    this.pushSettingsToForm ();
   }
 
-  this.refreshForm = function() {
+  this.pushSettingsToForm = function() {
     for (var id in params) {
       var param = params[id];
       this.param = parseFloat($("#" + param).val());
@@ -455,7 +455,7 @@ function Configuration() {
   }
 
   // constructor
-  this.loadPreloaded(1);
+  this.loadPredefinedSettings(1);
 };
 
 function Epidemic(_config, _grid, _picture) {
@@ -524,7 +524,7 @@ function Epidemic(_config, _grid, _picture) {
       this.iterationNumber = state.iterationNumber;
       this.plot.historyOverall = state["historyOverall"];
       this.plot.historyInfected = state["historyInfected"];
-      this.config.loadState(state["config"]);
+      this.config.loadSavedSettings(state["config"]);
       this.plot.refresh();
       this.init();
       return true;
@@ -646,12 +646,12 @@ $(document).ready(function(){
   });
   $("#providedEpidemics a").click(function(event) {
     event.preventDefault();
-    config.loadPreloaded($(this).data("id"));
+    config.loadPredefinedSettings($(this).data("id"));
     showAlert("Settings for " + $(this).text() + " epidemic have been loaded.");
   });
   $("#configuration").submit(function(event) {
     event.preventDefault();
-    config.loadFromForm();
+    config.loadSettingsFromForm();
     showAlert("Settings have been saved.");
   });
 });
