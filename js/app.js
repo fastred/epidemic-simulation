@@ -468,9 +468,11 @@ function Epidemic(_config, _grid, _picture) {
     this.interval = setInterval(function() { that.nextStep()}, 50 );
   }
   this.showStats = function() {
-    $("#iteration").html("Day: " + iterationNumber + ", Population: " +
-                        grid.populationOverallCount +
-                        ", Infected population: " + grid.infectedOverallCount);
+    var pop = Math.round(grid.populationOverallCount/10000)/100;
+    var inf = Math.round(grid.infectedOverallCount/10000)/100;
+    $("#iterationInfo div:eq(0)").html("Day: " + iterationNumber);
+    $("#iterationInfo div:eq(1)").html("Population: " + pop + "M");
+    $("#iterationInfo div:eq(2)").html("Infected population: " + inf + "M");
   }
   this.nextStep = function() {
     grid.next(config);
