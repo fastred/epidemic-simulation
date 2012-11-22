@@ -287,8 +287,8 @@ function Picture(_cols, _rows) {
 
   // Returns info about the cell that is under the provided position on the page.
   this.getCellPosition = function(pageX, pageY) {
-    var x = (pageX - $("#picture").offset().left);
-    var y = (pageY - $("#picture").offset().top);
+    var x = (pageX - canvas.offsetLeft);
+    var y = (pageY - canvas.offsetTop);
     var col = Math.floor(x/sizeX);
     var row = Math.floor(y/sizeY);
     var index = col + row * colsCount;
