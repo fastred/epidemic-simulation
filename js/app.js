@@ -321,7 +321,7 @@ function Picture(_cols, _rows) {
   // Changes the color of the current cell to indicate that it's now infected.
   this.setAsInfected = function(index, col, row) {
     if (cellsPopulation[index] != 0) {
-      ctx.fillStyle = "hsl(0,100%,50%)";
+      ctx.fillStyle = "rgba(255,0,0,100)";
       ctx.fillRect(row * sizeX, col * sizeY, sizeX, sizeY);
     }
   }
