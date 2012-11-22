@@ -285,6 +285,7 @@ function Picture(_cols, _rows) {
   var sizeX = canvas.width/colsCount;
   var sizeY = canvas.height/rowsCount;
 
+  // Returns info about the cell that is under the provided position on the page.
   this.getCellPosition = function(pageX, pageY) {
     var x = (pageX - $("#picture").offset().left);
     var y = (pageY - $("#picture").offset().top);
@@ -298,6 +299,7 @@ function Picture(_cols, _rows) {
     };
   }
 
+  // Updates the map based on the current cells state.
   this.updateWithNewData = function(cells) {
     for(i = 0; i < cellsCount; i++) {
       if (cells[i].populationLimit > 0) {
@@ -311,10 +313,12 @@ function Picture(_cols, _rows) {
     }
   }
 
+  // Returns the info about the cell from the given onclick event.
   this.getClickedCellPosition = function(event) {
     return this.getCellPosition(event.pageX, event.pageY);
   }
 
+  // Changes the color of the current cell to indicate that it's now infected.
   this.setAsInfected = function(index, col, row) {
     if (cellsPopulation[index] != 0) {
       ctx.fillStyle = "hsl(0,100%,50%)";
@@ -322,6 +326,8 @@ function Picture(_cols, _rows) {
     }
   }
 
+  // Exports the map picture as a data URI scheme, read more at:
+  // http://tools.ietf.org/html/rfc2397
   this.exportImage = function() {
     // Create offscreen buffer.
     buffer = document.createElement('canvas');
@@ -359,6 +365,7 @@ function Plot() {
     historyInfected = val;
   });
 
+  // Adds new data to the plot and refresh it.
   this.updateWithNewData = function(overall, infected) {
     var count = historyOverall.length;
     historyOverall.push([count, overall]);
@@ -390,7 +397,7 @@ function Configuration() {
     this[param] = function() {
       return this[param];
     };
-    // Create a new setter for the property
+    // Create a setter that checks whether 'val' is in the interval [0,1]
     this[param] = function(val) {
       if (val > 1) {
         val = 1;
@@ -404,7 +411,8 @@ function Configuration() {
   // Calculates new recovery rate if the recovery improvement is set.
   this.updateRecoveryRate = function() {
     this.recoveryRate *= 1 + this.recoveryImprovement;
-    // round to 4 decimals
+    // Round to 4 decimals -- we have to do that, because form uses input type
+    // number with 'step' set to 0.0001, and it is the best precision available.
     this.recoveryRate = Math.round(this.recoveryRate*10000)/10000
     if (this.recoveryRate > 1) {
       this.recoveryRate = 1;
@@ -412,6 +420,7 @@ function Configuration() {
     $("#recoveryRate").val(this.recoveryRate);
   }
 
+  // Loads predefined (provided by authors) settings for few diseases.
   this.loadPredefinedSettings = function(id) {
     var values;
     if (id == 1) {
@@ -431,6 +440,7 @@ function Configuration() {
     this.pushSettingsToForm();
   }
 
+  // Loads settings entered by the user in the form.
   this.loadSettingsFromForm = function() {
     for (var id in params) {
       var param = params[id];
@@ -438,14 +448,17 @@ function Configuration() {
     }
   }
 
+  // Loads settings from the previously saved state.
   this.loadSavedSettings = function(loaded) {
     for (var id in params) {
       var param = params[id];
       this[param] = loaded[param];
     }
-    this.pushSettingsToForm ();
+    this.pushSettingsToForm();
   }
 
+  // Updates user-facing form with new values. It's used e.g. after loading one
+  // of the default diseases.
   this.pushSettingsToForm = function() {
     for (var id in params) {
       var param = params[id];
@@ -458,6 +471,7 @@ function Configuration() {
   this.loadPredefinedSettings(1);
 };
 
+// # Epidemic class
 function Epidemic(_config, _grid, _picture) {
   this.init = function() {
     picture.updateWithNewData(grid.cells);
@@ -467,6 +481,8 @@ function Epidemic(_config, _grid, _picture) {
     var that = this;
     this.interval = setInterval(function() { that.nextStep()}, 50 );
   }
+
+  // Show current stats (day, population, infected) under the map.
   this.showStats = function() {
     var pop = Math.round(grid.populationOverallCount/10000)/100;
     var inf = Math.round(grid.infectedOverallCount/10000)/100;
@@ -474,6 +490,8 @@ function Epidemic(_config, _grid, _picture) {
     $("#iterationInfo div:eq(1)").html("Population: " + pop + "M");
     $("#iterationInfo div:eq(2)").html("Infected population: " + inf + "M");
   }
+
+  // Generates next step of the simulation.
   this.nextStep = function() {
     grid.next(config);
     picture.updateWithNewData(grid.cells);
@@ -481,16 +499,20 @@ function Epidemic(_config, _grid, _picture) {
     iterationNumber++;
     this.showStats();
   }
+
   this.pause = function() {
     running = false;
     clearInterval(this.interval);
   }
+
+  // This method is called when user clicks on the map.
   this.infectedUpdated = function(event) {
     var pos = picture.getClickedCellPosition(event);
     grid.setAsInfected(pos.index);
     picture.setAsInfected(pos.index, pos.row, pos.col);
     this.showStats();
   }
+
   this.restart = function() {
     grid.resetCells();
     iterationNumber = 0;
@@ -500,6 +522,8 @@ function Epidemic(_config, _grid, _picture) {
     this.init();
     this.showStats();
   }
+
+  // Saves current state in the user browsers' localStorage.
   this.save = function() {
     var id = (new Date()).toGMTString();
     var state = {}
@@ -515,6 +539,7 @@ function Epidemic(_config, _grid, _picture) {
       return false;
     }
   }
+
   this.savedStatesList = function() {
     var list = [];
     for (var prop in localStorage) {
@@ -522,6 +547,7 @@ function Epidemic(_config, _grid, _picture) {
     }
     return list;
   }
+
   this.load = function(id) {
     try {
       var state = JSON.parse(localStorage[id]);
@@ -538,10 +564,12 @@ function Epidemic(_config, _grid, _picture) {
       return false;
     }
   }
+
   this.deleteSavedState = function(id) {
     delete localStorage[id];
   }
 
+  // constructor
   var config = _config;
   var grid = _grid;
   var picture = _picture;
@@ -561,6 +589,7 @@ $(document).ready(function(){
   epidemic.showStats();
 
   // # Events.
+  // ## Control buttons' events.
   var startButton = $("#start");
   var pauseButton = $("#pause");
   var oneStepButton = $("#oneStep");
@@ -593,6 +622,8 @@ $(document).ready(function(){
     epidemic.restart();
     showAlert("Simulation has been restarted.");
   });
+
+  // ## Import and export buttons' events.
   exportImageButton.click(function(event) {
     event.preventDefault();
     picture.exportImage();
