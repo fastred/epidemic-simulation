@@ -462,7 +462,6 @@ function Configuration() {
   this.pushSettingsToForm = function() {
     for (var id in params) {
       var param = params[id];
-      this.param = parseFloat($("#" + param).val());
       $("#" + param).val(this[param]);
     }
   }
