@@ -52,11 +52,18 @@
     </div>
     <div class="span6">
       You can select one of the provided epidemics:
-      <ul id="providedEpidemics">
-        <li><a href="#" data-id="1">Influenza</a> (default)</li>
-        <li><a href="#" data-id="2">Smallpox</a></li>
-        <li><a href="#" data-id="3">Zombie</a></li>
-      </ul>
+      <label class="radio">
+        <input type="radio" name="providedEpidemics" value="1" checked>
+        <span>Influenza</span>
+      </label>
+      <label class="radio">
+        <input type="radio" name="providedEpidemics" value="2">
+        <span>Smallpox</span>
+      </label>
+      <label class="radio">
+        <input type="radio" name="providedEpidemics" value="3">
+        <span>Zombie</span>
+      </label>
       or create your own:
       <legend></legend>
       <form id="configuration" method="post">

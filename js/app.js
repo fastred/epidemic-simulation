@@ -690,14 +690,15 @@ $(document).ready(function(){
   $("#picture").click(function(event){
     epidemic.infectedUpdated(event);
   });
-  $("#providedEpidemics a").click(function(event) {
+  $("input:radio[name=providedEpidemics]").change(function(event) {
     event.preventDefault();
-    config.loadPredefinedSettings($(this).data("id"));
-    showAlert("Settings for " + $(this).text() + " epidemic have been loaded.");
+    config.loadPredefinedSettings($(this).val());
+    showAlert("Settings for " + $(this).next().text() + " epidemic have been loaded.");
   });
   $("#configuration").submit(function(event) {
     event.preventDefault();
     config.loadSettingsFromForm();
+    $("input:radio[name=providedEpidemics]").prop('checked', false);
     showAlert("Settings have been saved.");
   });
 });
