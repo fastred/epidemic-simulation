@@ -598,6 +598,9 @@ $(document).ready(function(){
   var restartButton = $("#restart");
   startButton.click(function(event) {
     event.preventDefault();
+    if($(this).attr('disabled')) {
+      return false;
+    };
     if (!epidemic.running) {
       $(this).attr("disabled", "disabled");
       oneStepButton.attr("disabled", "disabled");
@@ -606,6 +609,9 @@ $(document).ready(function(){
     }
   });
   pauseButton.click(function(event) {
+    if($(this).attr('disabled')) {
+      return false;
+    };
     event.preventDefault();
     startButton.removeAttr("disabled");
     oneStepButton.removeAttr("disabled");
@@ -613,6 +619,9 @@ $(document).ready(function(){
     epidemic.pause();
   });
   oneStepButton.click(function(event) {
+    if($(this).attr('disabled')) {
+      return false;
+    };
     event.preventDefault();
     epidemic.nextStep();
   });
