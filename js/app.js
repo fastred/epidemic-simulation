@@ -581,7 +581,7 @@ function Epidemic(_config, _grid, _picture) {
 
 $(document).ready(function(){
   var config = new Configuration();
-  var grid = new Grid(config);
+  var grid = new Grid();
   var picture = new Picture(grid.colsCount, grid.rowsCount);
 
   var epidemic = new Epidemic(config, grid, picture);
