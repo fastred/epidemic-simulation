@@ -250,6 +250,7 @@ function Grid() {
       cells[i].infectedCount = loaded[i].infectedCount;
       cells[i].populationLimit = loaded[i].populationLimit;
     }
+    this.updateOverallCount();
   }
 
   this.resetCells = function() {
