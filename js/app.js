@@ -426,7 +426,7 @@ function Configuration() {
     var values;
     if (id == 1) {
       // influenza
-      values = [0.01, 0.0001, 0.0001, 0.001, 0.3, 0.6, 0.1, 0.008];
+      values = [0.01, 0.0001, 0.0001, 0.004, 0.3, 0.6, 0.1, 0.008];
     } else if(id == 2) {
       // smallpox
       values = [0.01, 0.0001, 0.0001, 0.005, 0.3, 0.6, 0.1, 0.01];
