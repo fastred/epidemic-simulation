@@ -514,6 +514,9 @@ function Configuration() {
 
 // # Epidemic class
 function Epidemic(_config, _grid, _picture) {
+
+  this.lastMouseOveredCell;
+
   this.init = function() {
     picture.updateWithNewData(grid.cells);
   }
@@ -544,6 +547,7 @@ function Epidemic(_config, _grid, _picture) {
                            grid.infectedOverallCount);
     iterationNumber++;
     this.showStats();
+    this.updateCellInfo(null, null);
   }
 
   this.pause = function() {
@@ -562,16 +566,23 @@ function Epidemic(_config, _grid, _picture) {
   this.showCellInfo = function(event) {
     var pos = picture.getClickedCellPosition(event);
     var cell = grid.cells[pos.index];
-    // TODO move out from Epidemic
+    this.lastMouseOveredCell = cell;
+    this.updateCellInfo(event.pageX, event.pageY + 15);
+  };
+
+  this.updateCellInfo = function(posX, posY) {
+    var cell = this.lastMouseOveredCell;
     var $cellInfo = $("#cellInfo");
-    $cellInfo.show();
-    $cellInfo.css("left", event.pageX);
-    $cellInfo.css("top", event.pageY + 20);
-    $cellInfo.html("population: " + cell.populationCount() + "<br>incubated: " +
+    if (typeof posX !== 'undefined' && typeof posY !== 'undefined') {
+      $cellInfo.css("left", posX);
+      $cellInfo.css("top", posY);
+    }
+    $cellInfo.html("population: " + cell.populationCount() +
+                   "<br>susceptible: " + cell.susceptibleCount() + 
+                   "<br>incubated: " +
                   cell.incubatedCount() + "<br>infected: " + cell.infectedCount() +
                   "<br>recovered: " + cell.recoveredCount());
-
-  }
+  };
 
   this.restart = function() {
     grid.resetCells();
@@ -766,6 +777,8 @@ $(document).ready(function(){
     epidemic.showCellInfo(event);
   }).mouseleave(function() {
     $("#cellInfo").hide();
+  }).mouseenter(function() {
+    $("#cellInfo").show();
   });
 
 
