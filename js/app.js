@@ -47,14 +47,14 @@ var newIncubatedDefaultPercentage = 0.05;
 
 //# Cell class
 // This class represents one cell in the grid.
-function Cell(_populationCount, populationLimit) {
+function Cell(_populationCount, _populationLimit) {
   // [0] is susceptible
   // [1..2] is incubated
   // [3..6] is infected
   // [7] is recovered
   this.statesCount = makeArrayOf(0, statesCountLength);
   this.statesCount[0] = _populationCount;
-  this.populationLimit = populationLimit;
+  this.populationLimit = _populationLimit;
 
   // Simulates natural deaths with given probability.
   this.simNaturalDeaths = function(prob) {
@@ -81,11 +81,11 @@ function Cell(_populationCount, populationLimit) {
   }
 
   // Simulates new infections (with given probability).
-  this.simInfections = function(prob) {
+  this.simInfections = function(prob, immigrants) {
     if (this.populationCount() > 0) {
-      var infectedToday = Math.round(this.susceptibleCount() * prob * this.infectedCount() /
+      var infectedToday = Math.round(this.susceptibleCount() * prob *
+                                     (this.infectedCount() + immigrants.infectious) /
                                     this.populationCount());
-      //var infectedToday = Math.round(this.infectedCount() * 2);
       if (infectedToday > this.susceptibleCount()) {
         infectedToday = this.susceptibleCount();
       }
@@ -244,23 +244,23 @@ function Grid() {
   // 4. Move people to all neighbouring cell
   // 5. Repeat until all cells were chosen
   this.simImmigrations = function(config) {
+    this.immigrants = _.map(makeArrayOf(null, cells.length), function () {
+      return {infectious: 0, notInfectious: 0};
+    });
+
     var randIndexes = _.map(cells, function(val, key){ return key});
     randIndexes = shuffle(randIndexes);
     for(var i = 0; i < randIndexes.length; i++) {
-      var neighbours = shuffle(this.getNeighbours(randIndexes[i]));
       var currCell = cells[randIndexes[i]];
-      for (var k = 0; k < statesCountLength; k++ ) {
-        var immigrationRate = k > 0 && k < statesCountLength - 1 ? config.illImmigrationRate :
+      var neighbours = shuffle(this.getNeighbours(randIndexes[i]));
+      for(var j = 0; j < neighbours.length; j++) {
+        var neighCell = cells[neighbours[j]];
+        var infectiousMove = currCell.infectedCount() * config.illImmigrationRate;
+        var notInfectiousMove = (currCell.populationCount() - currCell.infectedCount()) *
           config.immigrationRate;
-        var toMove = Math.round(immigrationRate *
-                                currCell.statesCount[k] / neighbours.length);
-        for(var j = 0; j < neighbours.length; j++) {
-          var neighCell = cells[neighbours[j]];
-          if (neighCell.populationCount() + toMove > neighCell.populationLimit) {
-            toMove = neighCell.populationLimit - neighCell.populationCount();
-          }
-          neighCell.statesCount[k] += toMove;
-          currCell.statesCount[k] -= toMove;
+        if (neighCell.populationCount() + infectiousMove + notInfectiousMove < neighCell.populationLimit) {
+          this.immigrants[neighbours[j]].infectious += infectiousMove;
+          this.immigrants[neighbours[j]].notInfectious += notInfectiousMove;
         }
       }
     }
@@ -279,9 +279,8 @@ function Grid() {
     // Simulates new infections. Then simulates recoveries.
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
-      currCell.simInfections(config.contactInfectionRate);
+      currCell.simInfections(config.contactInfectionRate, this.immigrants[i]);
       currCell.simRecoveries(config.recoveryRate);
-      //console.log(i);
     }
     config.updateRecoveryRate();
     this.updateOverallCount();
@@ -467,7 +466,7 @@ function Configuration() {
     var values;
     if (id == 1) {
       // influenza
-      values = [0.2, 0.08, 0.0001, 0.0001, 0.004, 0.6, 0.1, 0.008];
+      values = [0.05, 0.02, 0.0001, 0.0001, 0.004, 0.6, 0.1, 0.008];
     }
     //else if(id == 2) {
       //// smallpox
