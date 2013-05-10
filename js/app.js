@@ -253,11 +253,11 @@ function Grid() {
     for(var i = 0; i < randIndexes.length; i++) {
       var currCell = cells[randIndexes[i]];
       var neighbours = shuffle(this.getNeighbours(randIndexes[i]));
+      var infectiousMove = currCell.infectedCount() * config.illImmigrationRate / neighbours.length;
+      var notInfectiousMove = (currCell.populationCount() - currCell.infectedCount()) *
+        config.immigrationRate / neighbours.length;
       for(var j = 0; j < neighbours.length; j++) {
         var neighCell = cells[neighbours[j]];
-        var infectiousMove = currCell.infectedCount() * config.illImmigrationRate;
-        var notInfectiousMove = (currCell.populationCount() - currCell.infectedCount()) *
-          config.immigrationRate;
         if (neighCell.populationCount() + infectiousMove + notInfectiousMove < neighCell.populationLimit) {
           this.immigrants[neighbours[j]].infectious += infectiousMove;
           this.immigrants[neighbours[j]].notInfectious += notInfectiousMove;
