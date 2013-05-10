@@ -34,76 +34,117 @@ function showAlert(msg) {
   }, 2000);
 }
 
+
+// Global config
+
+var incubatedDays = 2;
+var infectedDays = 4;
+var recoveredIndex = 1 + incubatedDays + infectedDays;
+var incubatedIndex = 1;
+var infectedIndex = incubatedIndex + incubatedDays;
+var statesCountLength = 2 + incubatedDays + infectedDays;
+var newIncubatedDefaultPercentage = 0.05;
+
 //# Cell class
 // This class represents one cell in the grid.
-// It contains three values:
-//
-// * population count
-// * infected population count
-// * population limit (limited e.g. by the number of houses or food
-// availability)
-function Cell(populationCount, infectedCount, populationLimit) {
-  var populationCount = populationCount;
-  var infectedCount = infectedCount;
-  var populationLimit = populationLimit;
-
-  this.__defineGetter__("populationCount", function(){
-    return populationCount;
-  });
-  this.__defineSetter__("populationCount", function(val){
-    populationCount = val;
-  });
-  this.__defineGetter__("infectedCount", function(){
-    return infectedCount;
-  });
-  this.__defineSetter__("infectedCount", function(val){
-    infectedCount = val;
-  });
-  this.__defineGetter__("populationLimit", function(){
-    return populationLimit;
-  });
-  this.__defineSetter__("populationLimit", function(val){
-    populationLimit = val;
-  });
+function Cell(_populationCount, populationLimit) {
+  // [0] is susceptible
+  // [1..2] is incubated
+  // [3..6] is infected
+  // [7] is recovered
+  this.statesCount = makeArrayOf(0, statesCountLength);
+  this.statesCount[0] = _populationCount;
+  this.populationLimit = populationLimit;
 
   // Simulates natural deaths with given probability.
   this.simNaturalDeaths = function(prob) {
-    this.populationCount -= Math.round(this.populationCount * prob);
-    this.infectedCount -= Math.round(this.infectedCount * prob);
+    for (var i = 0; i < statesCountLength; i++ ) {
+      var diedToday = Math.round(this.statesCount[i] * prob);
+      this.statesCount[i] -= diedToday;
+    }
   }
 
   // Simulates deaths caused by the virus (with given probability).
   this.simVirusMorbidity= function(prob) {
-    if (Math.random() < prob) {
-      var dead = Math.round(this.infectedCount / 5 * 4);
-      this.populationCount -= dead;
-      this.infectedCount -= dead;
+    for (var i = incubatedIndex; i < infectedIndex + infectedDays; i++ ) {
+      var diedToday = Math.round(this.statesCount[i] * prob);
+      this.statesCount[i] -= diedToday;
     }
   }
 
   // Simulates new births with given probability.
   this.simBirths = function(prob) {
-    var newborns = Math.round(this.populationCount * prob);
-    if(this.populationCount + newborns > this.populationLimit) {
-      newborns = this.populationLimit - this.populationCount;
+    for (var i = 0; i < statesCountLength; i++ ) {
+      var newborns = Math.round(this.statesCount[i] * prob);
+      this.statesCount[i] += newborns;
     }
-    this.populationCount += newborns;
   }
 
   // Simulates new infections (with given probability).
   this.simInfections = function(prob) {
-    if (this.populationCount > 0) {
-      var susceptible = this.populationCount - this.infectedCount;
-      var infected = Math.round(susceptible * prob);
-      this.infectedCount += infected;
+    if (this.populationCount() > 0) {
+      var infectedToday = Math.round(this.susceptibleCount() * prob * this.infectedCount() /
+                                    this.populationCount());
+      //var infectedToday = Math.round(this.infectedCount() * 2);
+      if (infectedToday > this.susceptibleCount()) {
+        infectedToday = this.susceptibleCount();
+      }
+      for (var i = this.statesCount.length - 2; i >= 0; i--) {
+        if (i === 0) {
+          this.statesCount[i + 1] += infectedToday;
+          this.statesCount[i] -= infectedToday;
+        } else {
+          this.statesCount[i + 1] += this.statesCount[i];
+          this.statesCount[i] = 0;
+        }
+      }
     }
-  }
+  };
+
+  this.susceptibleCount = function() {
+    return this.statesCount[0];
+  };
+
+  this.setSusceptibleCount = function(value) {
+    this.statesCount[0] = value;
+  };
+
+  this.recoveredCount = function() {
+    return this.statesCount[recoveredIndex];
+  };
+
+  this.incubatedCount = function() {
+    return _.reduce(this.statesCount.slice(incubatedIndex, incubatedIndex + incubatedDays),
+                    function(memo, num) {
+                      return memo + num;
+                    }, 0);
+  };
+
+  this.infectedCount = function() {
+    return _.reduce(this.statesCount.slice(infectedIndex, infectedIndex + infectedDays),
+                    function(memo, num) {
+                      return memo + num;
+                    }, 0);
+  };
+
+  this.populationCount = function() {
+    return _.reduce(this.statesCount,
+                    function(memo, num) {
+                      return memo + num;
+                    }, 0);
+  };
+
+  this.addNewIncubated = function(percentage) {
+    var infected = Math.round(this.statesCount[0] * percentage);
+    this.statesCount[0] -= infected;
+    this.statesCount[1] += infected;
+  };
 
   // Simulates recoveries (with given probability).
   this.simRecoveries = function(prob) {
-    var recovered = Math.round(this.infectedCount * prob);
-    this.infectedCount -= recovered;
-  }
+    //var recovered = Math.round(this.infectedCount * prob);
+    //this.infectedCount -= recovered;
+  };
 }
 
 // # Grid class
@@ -114,7 +155,9 @@ function Grid() {
   var cellsCount = rowsCount * colsCount;
   var cells = new Array(cellsCount);
   var populationOverallCount = 0;
+  var incubatedOverallCount = 0;
   var infectedOverallCount = 0;
+  var recoveredOverallCount = 0;
 
   this.__defineGetter__("rowsCount", function(){
     return rowsCount;
@@ -131,32 +174,62 @@ function Grid() {
   this.__defineGetter__("infectedOverallCount", function(){
     return infectedOverallCount;
   });
+  this.__defineGetter__("incubatedOverallCount", function(){
+    return incubatedOverallCount;
+  });
+  this.__defineGetter__("recoveredOverallCount", function(){
+    return recoveredOverallCount;
+  });
 
   // Updates counts of total population and infected people.
   this.updateOverallCount = function() {
-    populationOverallCount = _.reduce(cells, function(memo, num) {
-      return memo + num.populationCount;
+    populationOverallCount = _.reduce(cells, function(memo, cell) {
+      return memo + cell.populationCount();
     }, 0);
-    infectedOverallCount = _.reduce(cells, function(memo, num) {
-      return memo + num.infectedCount;
+    infectedOverallCount = _.reduce(cells, function(memo, cell) {
+      return memo + cell.infectedCount();
+    }, 0);
+    incubatedOverallCount = _.reduce(cells, function(memo, cell) {
+      return memo + cell.incubatedCount();
+    }, 0);
+    recoveredOverallCount = _.reduce(cells, function(memo, cell) {
+      return memo + cell.recoveredCount();
     }, 0);
   };
 
   // Returns indices of neighbouring cells.
   this.getNeighbours = function(index) {
     var neighbours = [];
+    var possibleUp, possibleDown, possibleLeft, possibleRight;
     if (index / colsCount >= 1) {
       neighbours.push(index - colsCount); // up
+      possibleUp = true;
     }
     if (index % colsCount != colsCount - 1) {
       neighbours.push(index + 1); // right
+      possibleRight = true;
     }
     if (Math.floor(index / rowsCount) < rowsCount - 1) {
       neighbours.push(index + colsCount); // down
+      possibleDown = true;
     }
     if (index % colsCount != 0) {
       neighbours.push(index - 1); //left
+      possibleLeft = true;
     }
+    if (possibleUp && possibleRight) {
+      neighbours.push(index - colsCount + 1);
+    }
+    if (possibleUp && possibleLeft) {
+      neighbours.push(index - colsCount - 1);
+    }
+    if (possibleDown && possibleRight) {
+      neighbours.push(index + colsCount + 1);
+    }
+    if (possibleDown && possibleLeft) {
+      neighbours.push(index + colsCount - 1);
+    }
+
     return neighbours;
   }
 
@@ -173,85 +246,60 @@ function Grid() {
   this.simImmigrations = function(config) {
     var randIndexes = _.map(cells, function(val, key){ return key});
     randIndexes = shuffle(randIndexes);
-    for(i = 0; i < randIndexes.length; i++) {
+    for(var i = 0; i < randIndexes.length; i++) {
       var neighbours = shuffle(this.getNeighbours(randIndexes[i]));
       var currCell = cells[randIndexes[i]];
-      var toMove = Math.round(config.immigrationRate *
-                              currCell.populationCount / neighbours.length);
-      var toMoveInfected = Math.round(config.immigrationRate *
-                                      currCell.infectedCount / neighbours.length);
-      for(j = 0; j < neighbours.length; j++) {
-        var neighCell = cells[neighbours[j]];
-        if (neighCell.populationCount + toMove > neighCell.populationLimit) {
-          toMove = neighCell.populationLimit - neighCell.populationCount;
-          if (toMoveInfected > toMove) { toMoveInfected = toMove; }
+      for (var k = 0; k < statesCountLength; k++ ) {
+        var immigrationRate = k > 0 && k < statesCountLength - 1 ? config.illImmigrationRate :
+          config.immigrationRate;
+        var toMove = Math.round(immigrationRate *
+                                currCell.statesCount[k] / neighbours.length);
+        for(var j = 0; j < neighbours.length; j++) {
+          var neighCell = cells[neighbours[j]];
+          if (neighCell.populationCount() + toMove > neighCell.populationLimit) {
+            toMove = neighCell.populationLimit - neighCell.populationCount();
+          }
+          neighCell.statesCount[k] += toMove;
+          currCell.statesCount[k] -= toMove;
         }
-        neighCell.populationCount += toMove;
-        neighCell.infectedCount += toMoveInfected;
-        currCell.populationCount -= toMove;
-        currCell.infectedCount -= toMoveInfected;
       }
     }
-  }
-
-  // Virus can be spread only when it's present in neighbouring cells.
-  // Probability rises when percentage of people infected in the neighbourhood
-  // rises. This probability is calculated before other steps.
-  this.calculateVectoredRates = function(config) {
-    var vectoredRates = makeArrayOf(0, cellsCount);
-    for(i = 0; i < cellsCount; i++) {
-      var currCell = cells[i];
-      var neighbours = this.getNeighbours(i);
-      var neighbourhoodCapacity = _.reduce(neighbours, function(memo, num) {
-        return memo + cells[num].populationCount;
-      }, 0, this);
-      if (neighbourhoodCapacity > 0) {
-        var neighbourhoodInfected = _.reduce(neighbours, function(memo, num) {
-          return memo + cells[num].infectedCount;
-        }, 0, this);
-        vectoredRates[i] = (neighbourhoodInfected / neighbourhoodCapacity) *
-          config.vectoredInfectionRate;
-      }
-    }
-    return vectoredRates;
   }
 
   // Performs next step in the simulation.
   this.next = function(config) {
     this.simImmigrations(config);
-    var vectoredRates = this.calculateVectoredRates(config);
     // Simulates natural deaths, deaths caused by the virus and new births.
-    for(i = 0; i < cellsCount; i++) {
+    for(var i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
       currCell.simNaturalDeaths(config.naturalDeathRate);
       currCell.simVirusMorbidity(config.virusMorbidity);
       currCell.simBirths(config.birthRate);
     }
-    // Simulates new contact and vectored infections. Then simulates recoveries.
+    // Simulates new infections. Then simulates recoveries.
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
-      var limitContactRate = currCell.infectedCount / currCell.populationCount;
-      var contactRate = limitContactRate * config.contactInfectionRate
-      currCell.simInfections(vectoredRates[i] + contactRate);
+      currCell.simInfections(config.contactInfectionRate);
       currCell.simRecoveries(config.recoveryRate);
+      //console.log(i);
     }
     config.updateRecoveryRate();
     this.updateOverallCount();
   }
 
   this.setAsInfected = function(index) {
-    cells[index].infectedCount = cells[index].populationCount;
+    cells[index].addNewIncubated(newIncubatedDefaultPercentage);
     this.updateOverallCount();
   }
 
-  this.loadState = function(loaded) {
-    for(i = 0; i < cellsCount; i++) {
-      cells[i].populationCount = loaded[i].populationCount;
-      cells[i].infectedCount = loaded[i].infectedCount;
-      cells[i].populationLimit = loaded[i].populationLimit;
-    }
-    this.updateOverallCount();
-  }
+  //this.loadState = function(loaded) {
+    //for(var i = 0; i < cellsCount; i++) {
+      //cells[i].populationCount = loaded[i].populationCount;
+      //cells[i].infectedCount = loaded[i].infectedCount;
+      //cells[i].populationLimit = loaded[i].populationLimit;
+    //}
+    //this.updateOverallCount();
+  //}
 
   this.resetCells = function() {
     cells = new Array(cellsCount);
@@ -261,11 +309,11 @@ function Grid() {
   this.init = function() {
     // constructor
     var avg = 26000;
-    for(i = 0; i < cellsCount; i++) {
-      cells[i] = new Cell(avg, 0, avg * 2.5);
+    for(var i = 0; i < cellsCount; i++) {
+      cells[i] = new Cell(avg, avg * 2.5);
     }
     _.each(cellsPopulation, function(value, key) {
-      cells[key].populationCount = value;
+      cells[key].setSusceptibleCount(value);
       cells[key].populationLimit = value * 2.5;
     }, this);
     this.updateOverallCount();
@@ -304,7 +352,7 @@ function Picture(_cols, _rows) {
   this.updateWithNewData = function(cells) {
     for(i = 0; i < cellsCount; i++) {
       if (cells[i].populationLimit > 0) {
-        var percentage = cells[i].infectedCount / cells[i].populationCount;
+        var percentage = (cells[i].infectedCount() + cells[i].incubatedCount()) / cells[i].populationCount();
         ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
         ctx.clearRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
                       sizeY, sizeX, sizeY);
@@ -317,14 +365,6 @@ function Picture(_cols, _rows) {
   // Returns the info about the cell from the given onclick event.
   this.getClickedCellPosition = function(event) {
     return this.getCellPosition(event.pageX, event.pageY);
-  }
-
-  // Changes the color of the current cell to indicate that it's now infected.
-  this.setAsInfected = function(index, col, row) {
-    if (cellsPopulation[index] != 0) {
-      ctx.fillStyle = "rgba(255,0,0,100)";
-      ctx.fillRect(row * sizeX, col * sizeY, sizeX, sizeY);
-    }
   }
 
   // Exports the map picture as a data URI scheme, read more at:
@@ -375,9 +415,10 @@ function Plot() {
   }
 
   this.refresh = function() {
-    plot.setData([{ label: "Country population", color: "rgb(0, 185, 0)",
-                 data: historyOverall },
-                 { label: "Infected",
+    plot.setData([
+      //{ label: "Country population", color: "rgb(0, 185, 0)",
+                 //data: historyOverall },
+                 { label: "Incubated & Infected",
                    color: "rgb(185, 0, 0)",
                    data: historyInfected}]);
     plot.setupGrid();
@@ -388,9 +429,9 @@ function Plot() {
 // # Configuration class
 function Configuration() {
 
-  var params = ["immigrationRate", "birthRate", "naturalDeathRate",
-    "virusMorbidity", "vectoredInfectionRate", "contactInfectionRate",
-    "recoveryRate", "recoveryImprovement"];
+  var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
+    "virusMorbidity", "contactInfectionRate"];
+    
 
   // Generate getters and setters
   for(id in params) {
@@ -426,14 +467,15 @@ function Configuration() {
     var values;
     if (id == 1) {
       // influenza
-      values = [0.01, 0.0001, 0.0001, 0.004, 0.3, 0.6, 0.1, 0.008];
-    } else if(id == 2) {
-      // smallpox
-      values = [0.01, 0.0001, 0.0001, 0.005, 0.3, 0.6, 0.1, 0.01];
-    } else if(id == 3) {
-      // zombie
-      values = [0.2, 0.0001, 0.0001, 0.005, 0, 0.06, 0.01, 0];
+      values = [0.2, 0.08, 0.0001, 0.0001, 0.004, 0.6, 0.1, 0.008];
     }
+    //else if(id == 2) {
+      //// smallpox
+      //values = [0.01, 0.0001, 0.0001, 0.005, 0.3, 0.6, 0.1, 0.01];
+    //} else if(id == 3) {
+      //// zombie
+      //values = [0.2, 0.0001, 0.0001, 0.005, 0, 0.06, 0.01, 0];
+    //}
     for(var id in params) {
       var param = params[id];
       this[param] = values[id];
@@ -485,17 +527,22 @@ function Epidemic(_config, _grid, _picture) {
   // Show current stats (day, population, infected) under the map.
   this.showStats = function() {
     var pop = Math.round(grid.populationOverallCount/10000)/100;
+    var inc = Math.round(grid.incubatedOverallCount/10000)/100;
     var inf = Math.round(grid.infectedOverallCount/10000)/100;
-    $("#iterationInfo div:eq(0)").html("Day: " + iterationNumber);
-    $("#iterationInfo div:eq(1)").html("Population: " + pop + "M");
-    $("#iterationInfo div:eq(2)").html("Infected population: " + inf + "M");
+    var rec = Math.round(grid.recoveredOverallCount/10000)/100;
+    $("#iterationInfo div:eq(0)").html("Day:<br>" + iterationNumber);
+    $("#iterationInfo div:eq(1)").html("Population:<br>" + pop + "M");
+    $("#iterationInfo div:eq(2)").html("Incubated:<br>" + inc + "M");
+    $("#iterationInfo div:eq(3)").html("Infected:<br>" + inf + "M");
+    $("#iterationInfo div:eq(4)").html("Recovered:<br>" + rec + "M");
   }
 
   // Generates next step of the simulation.
   this.nextStep = function() {
     grid.next(config);
     picture.updateWithNewData(grid.cells);
-    plot.updateWithNewData(grid.populationOverallCount, grid.infectedOverallCount);
+    plot.updateWithNewData(grid.populationOverallCount, grid.incubatedOverallCount +
+                           grid.infectedOverallCount);
     iterationNumber++;
     this.showStats();
   }
@@ -509,8 +556,22 @@ function Epidemic(_config, _grid, _picture) {
   this.infectedUpdated = function(event) {
     var pos = picture.getClickedCellPosition(event);
     grid.setAsInfected(pos.index);
-    picture.setAsInfected(pos.index, pos.row, pos.col);
+    picture.updateWithNewData(grid.cells);
     this.showStats();
+  }
+
+  this.showCellInfo = function(event) {
+    var pos = picture.getClickedCellPosition(event);
+    var cell = grid.cells[pos.index];
+    // TODO move out from Epidemic
+    var $cellInfo = $("#cellInfo");
+    $cellInfo.show();
+    $cellInfo.css("left", event.pageX);
+    $cellInfo.css("top", event.pageY + 20);
+    $cellInfo.html("population: " + cell.populationCount() + "<br>incubated: " +
+                  cell.incubatedCount() + "<br>infected: " + cell.infectedCount() +
+                  "<br>recovered: " + cell.recoveredCount());
+
   }
 
   this.restart = function() {
@@ -681,6 +742,7 @@ $(document).ready(function(){
       showAlert("There was an error while loading your state!");
     }
   });
+
   // Deletes saved state.
   $(".stateDelete").live("click", function(event) {
     event.preventDefault();
@@ -688,14 +750,34 @@ $(document).ready(function(){
     epidemic.deleteSavedState(id);
     $(this).parent().remove();
   });
-  $("#picture").click(function(event){
+
+  var mouseHolding;
+  $("#picture").mousedown(function(event){
     epidemic.infectedUpdated(event);
+    mouseHolding = setInterval(function() {
+      epidemic.infectedUpdated(event);
+      epidemic.showCellInfo(event);
+    }, 75 );
+    epidemic.showCellInfo(event);
+  }).bind('mouseup mouseleave', function() {
+    clearInterval(mouseHolding);
   });
+
+  $("#picture").mousemove(function(event) {
+    epidemic.showCellInfo(event);
+  }).mouseleave(function() {
+    $("#cellInfo").hide();
+  });
+
+
+
+
   $("input:radio[name=providedEpidemics]").change(function(event) {
     event.preventDefault();
     config.loadPredefinedSettings($(this).val());
     showAlert("Settings for " + $(this).next().text() + " epidemic have been loaded.");
   });
+
   $("#configuration").submit(function(event) {
     event.preventDefault();
     config.loadSettingsFromForm();
