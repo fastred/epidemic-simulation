@@ -98,9 +98,6 @@ function Cell(_populationCount, _populationLimit) {
       }
       immigrantsPopulation += immigrantsSusceptible + immigrantsIncubated +
         immigrantsInfected + immigrantsRecovered;
-        if (index == 993) {
-          console.log(immigrantsPopulation);
-        }
       var infectionProb = 1 - Math.exp(-prob * (this.infectedCount() + immigrantsInfected) /
         (this.populationCount() + immigrantsPopulation));
 
@@ -109,13 +106,13 @@ function Cell(_populationCount, _populationLimit) {
           var infectedTodayInCell = Math.round(this.susceptibleCount() * infectionProb);
           this.statesCount[i + 1] += infectedTodayInCell;
           this.statesCount[i] -= infectedTodayInCell;
-          if (index == 993) {
-            console.log("infectedtoday: " + infectedTodayInCell + "\nimmigrantsinfected " +
-                        immigrantsInfected + "\nthisinfected: " + this.infectedCount() +
-                       "\nimmigrantpopulation: " + immigrantsPopulation +
-                       "\nthispopulation: " + this.populationCount());
-            console.log(immigrants);
-          }
+          //if (index == 993) {
+            //console.log("infectedtoday: " + infectedTodayInCell + "\nimmigrantsinfected " +
+                        //immigrantsInfected + "\nthisinfected: " + this.infectedCount() +
+                       //"\nimmigrantpopulation: " + immigrantsPopulation +
+                       //"\nthispopulation: " + this.populationCount());
+            //console.log(immigrants);
+          //}
         } else {
           this.statesCount[i + 1] += this.statesCount[i];
           this.statesCount[i] = 0;
@@ -326,11 +323,11 @@ function Grid() {
         var neighbours = this.getNeighbours(i);
         var closeCityObj = closestCity[i];
         var closeCityExists = false;
-        //if (currCell.populationCount() < averagePopulationCount && closeCityObj.dist == 2 ||
-           //closeCityObj == 3) {
-          //neighbours.push(closeCityObj.ind);
-          //closeCityExists = true;
-        //}
+        if (currCell.populationCount() <= averagePopulationCount &&
+            closeCityObj.dist >= 2 && closeCityObj <= 4) {
+          neighbours.push(closeCityObj.ind);
+          closeCityExists = true;
+        }
 
         for(var j = 0; j < neighbours.length; j++) {
           var neighCell = cells[neighbours[j]];
@@ -358,15 +355,10 @@ function Grid() {
               currCell.statesCount[k] -= toMove;
               immigrantFromCellSum += toMove;
             }
-            if (neighbours[j] == 993) {
-              console.log(i + ": " + immigrantFromCellSum);
-              console.log(this.immigrants[993][992].statesCount[0]);
-            }
           }
         }
       }
     }
-    console.log("\n");
   };
 
   this.simReturningImmigrations = function(config) {
@@ -445,10 +437,6 @@ function Grid() {
       var currCell = cells[i];
       if (currCell.populationLimit > 0) {
         var neighbours = this.getNeighbours(i);
-        // add big city to neighbours hash table
-        if (i in closestCity) {
-          neighbours.push(closestCity[i]);
-        }
 
         for(var j = 0; j < neighbours.length; j++) {
           var neighCell = cells[neighbours[j]];
