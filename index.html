@@ -53,7 +53,12 @@
         <div class="span1">
         </div>
       </div>
-      <div id="cellInfo" class="popover bottom" style="position:absolute;">
+      <div id="cellInfo" class="popover bottom">
+      </div>
+      <div id="cellAddIllForm" class="popover top">
+        <input id="illCount" type="range" min="0" max="500" step="1" value="0" />
+        <div>New infections: <span id="illSelectedCount">0</span></div>
+        <button id="illSubmit" type="submit" class="btn btn-primary">Submit</button>
       </div>
     </div>
     <div class="span6">

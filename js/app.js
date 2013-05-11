@@ -170,10 +170,11 @@ function Cell(_populationCount, _populationLimit) {
                     }, 0);
   };
 
-  this.addNewIncubated = function(percentage) {
-    var infectious = Math.round(this.statesCount[0] * percentage);
-    this.statesCount[0] -= infectious;
-    this.statesCount[1] += infectious;
+  this.addNewIncubated = function(value) {
+    if (value <= this.statesCount[0]) {
+      this.statesCount[0] -= value;
+      this.statesCount[1] += value;
+    }
   };
 }
 
@@ -393,11 +394,6 @@ function Grid() {
     }
     this.simReturningImmigrations(config);
     config.updateRecoveryRate();
-    this.updateOverallCount();
-  }
-
-  this.setAsInfectious = function(index) {
-    cells[index].addNewIncubated(newIncubatedDefaultPercentage);
     this.updateOverallCount();
   }
 
@@ -637,6 +633,7 @@ function Epidemic(_config, _grid, _picture) {
 
   this.lastMouseOveredCell;
   this.lastMouseOveredIndex;
+  this.cellGettingNewInfections;
 
   this.init = function() {
     picture.updateWithNewData(grid.cells);
@@ -676,10 +673,8 @@ function Epidemic(_config, _grid, _picture) {
     clearInterval(this.interval);
   }
 
-  // This method is called when user clicks on the map.
-  this.infectiousUpdated = function(event) {
-    var pos = picture.getClickedCellPosition(event);
-    grid.setAsInfectious(pos.index);
+  this.infectiousUpdate = function(value) {
+    this.cellGettingNewInfections.addNewIncubated(value);
     picture.updateWithNewData(grid.cells);
     this.showStats();
   }
@@ -690,6 +685,13 @@ function Epidemic(_config, _grid, _picture) {
     this.lastMouseOveredCell = cell;
     this.lastMouseOveredIndex = pos.index;
     this.updateCellInfo(event.pageX, event.pageY + 15);
+  };
+
+  this.getClickedCellInfo = function(event) {
+    var pos = picture.getClickedCellPosition(event);
+    var cell = grid.cells[pos.index];
+    this.cellGettingNewInfections = cell;
+    return cell;
   };
 
   this.updateCellInfo = function(posX, posY) {
@@ -886,16 +888,15 @@ $(document).ready(function(){
     $(this).parent().remove();
   });
 
-  var mouseHolding;
-  $("#picture").mousedown(function(event){
-    epidemic.infectiousUpdated(event);
-    mouseHolding = setInterval(function() {
-      epidemic.infectiousUpdated(event);
-      epidemic.showCellInfo(event);
-    }, 75 );
-    epidemic.showCellInfo(event);
-  }).bind('mouseup mouseleave', function() {
-    clearInterval(mouseHolding);
+  $("#picture").click(function(event) {
+    $div = $("#cellAddIllForm");
+    $div.show();
+    $div.css("left", event.pageX);
+    $div.css("top", event.pageY);
+    $input = $("#illCount");
+    var cell = epidemic.getClickedCellInfo(event);
+    $input.attr("min", 0);
+    $input.attr("max", cell.susceptibleCount());
   });
 
   $("#picture").mousemove(function(event) {
@@ -906,6 +907,16 @@ $(document).ready(function(){
     $("#cellInfo").show();
   });
 
+  $("#illCount").change(function() {
+    $("#illSelectedCount").text($(this).val());
+  });
+
+  $("#illSubmit").click(function(event) {
+    $("#cellAddIllForm").hide();
+    epidemic.infectiousUpdate(parseInt($("#illCount").val(), 10));
+    $("#illCount").attr("value", 0);
+    $("#illSelectedCount").text(0);
+  });
 
 
 
