@@ -415,12 +415,8 @@ function Grid() {
 
   this.init = function() {
     // constructor
-    for(var i = 0; i < cellsCount; i++) {
-      cells[i] = new Cell(averagePopulationCount, averagePopulationCount * 2.5);
-    }
     _.each(cellsPopulation, function(value, key) {
-      cells[key].setSusceptibleCount(value);
-      cells[key].populationLimit = value * 2.5;
+      cells[key] = new Cell(value, value * 2.5);
     }, this);
 
     // access by [destination_cell][source_cell] returns Cell
