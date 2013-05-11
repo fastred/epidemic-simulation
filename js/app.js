@@ -514,6 +514,7 @@ function Configuration() {
 function Epidemic(_config, _grid, _picture) {
 
   this.lastMouseOveredCell;
+  this.lastMouseOveredIndex;
 
   this.init = function() {
     picture.updateWithNewData(grid.cells);
@@ -565,6 +566,7 @@ function Epidemic(_config, _grid, _picture) {
     var pos = picture.getClickedCellPosition(event);
     var cell = grid.cells[pos.index];
     this.lastMouseOveredCell = cell;
+    this.lastMouseOveredIndex = pos.index;
     this.updateCellInfo(event.pageX, event.pageY + 15);
   };
 
@@ -575,7 +577,8 @@ function Epidemic(_config, _grid, _picture) {
       $cellInfo.css("left", posX);
       $cellInfo.css("top", posY);
     }
-    $cellInfo.html("population: " + cell.populationCount() +
+    $cellInfo.html("index: " + this.lastMouseOveredIndex +
+                   "<br>population: " + cell.populationCount() +
                    "<br>susceptible: " + cell.susceptibleCount() + 
                    "<br>incubated: " +
                   cell.incubatedCount() + "<br>infected: " + cell.infectedCount() +
