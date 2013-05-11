@@ -181,8 +181,8 @@ function Cell(_populationCount, _populationLimit) {
 // # Grid class
 // It represents grid of cells.
 function Grid() {
-  var rowsCount = 40;
-  var colsCount = 40;
+  var rowsCount = 36;
+  var colsCount = 36;
   var cellsCount = rowsCount * colsCount;
   var cells = new Array(cellsCount);
   var populationOverallCount = 0;
@@ -323,7 +323,7 @@ function Grid() {
         var neighbours = this.getNeighbours(i);
         var closeCityObj = closestCity[i];
         var closeCityExists = false;
-        if (currCell.populationCount() <= averagePopulationCount &&
+        if (currCell.populationCount() <= averagePopulationCount && closeCityObj &&
             closeCityObj.dist >= 2 && closeCityObj <= 4) {
           neighbours.push(closeCityObj.ind);
           closeCityExists = true;
@@ -478,6 +478,11 @@ function Picture(_cols, _rows) {
       if (cells[i].populationLimit > 0) {
         var percentage = (cells[i].infectiousCount() + cells[i].incubatedCount()) / cells[i].populationCount();
         ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
+
+        // debug
+        //if (cells[i].populationLimit > 0) {
+          //ctx.fillStyle = "rgba(111, 111, 111, 0.4)";
+        //}
         ctx.clearRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
                       sizeY, sizeX, sizeY);
         ctx.fillRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
@@ -780,7 +785,7 @@ function Epidemic(_config, _grid, _picture) {
 
 $(document).ready(function(){
   var config = new Configuration();
-  var grid = new Grid();
+  grid = new Grid();
   var picture = new Picture(grid.colsCount, grid.rowsCount);
 
   var epidemic = new Epidemic(config, grid, picture);
