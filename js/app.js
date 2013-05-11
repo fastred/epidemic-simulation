@@ -44,6 +44,7 @@ var incubatedIndex = 1;
 var infectedIndex = incubatedIndex + incubatedDays;
 var statesCountLength = 2 + incubatedDays + infectedDays;
 var newIncubatedDefaultPercentage = 0.05;
+var averagePopulationCount = 26000;
 
 //# Cell class
 // This class represents one cell in the grid.
@@ -83,19 +84,44 @@ function Cell(_populationCount, _populationLimit) {
   // Simulates new infections (with given probability).
   this.simInfections = function(prob, immigrants) {
     if (this.populationCount() > 0) {
-      var infectedToday = Math.round(this.susceptibleCount() * prob *
-                                     (this.infectedCount() + immigrants.infectious) /
-                                    this.populationCount());
-      if (infectedToday > this.susceptibleCount()) {
-        infectedToday = this.susceptibleCount();
+      var immigrantsSusceptible = 0;
+      var immigrantsIncubated = 0;
+      var immigrantsInfected = 0;
+      var immigrantsRecovered = 0;
+      var immigrantsPopulation = 0;
+      // immigrant counts (coming from different neighbours)
+      for (var i in immigrants) {
+        immigrantsSusceptible += immigrants[i].susceptibleCount();
+        immigrantsIncubated += immigrants[i].incubatedCount();
+        immigrantsInfected += immigrants[i].infectedCount();
+        immigrantsRecovered += immigrants[i].recoveredCount();
+        immigrantsPopulation += immigrantsSusceptible + immigrantsIncubated +
+          immigrantsInfected + immigrantsRecovered;
       }
+      var infectionProb = prob * (this.infectedCount() + immigrantsInfected) /
+        (this.populationCount() + immigrantsPopulation);
+
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
         if (i === 0) {
-          this.statesCount[i + 1] += infectedToday;
-          this.statesCount[i] -= infectedToday;
+          var infectedTodayInCell = Math.round(this.susceptibleCount() * infectionProb);
+          this.statesCount[i + 1] += infectedTodayInCell;
+          this.statesCount[i] -= infectedTodayInCell;
         } else {
           this.statesCount[i + 1] += this.statesCount[i];
           this.statesCount[i] = 0;
+        }
+        // advance state of immigrants, because they will get back to their cells
+        // after infections are simulated
+        for (var j in immigrants) {
+          if (i === 0) {
+            var infectedTodayImmigrantCell = Math.round(immigrants[j].susceptibleCount() *
+                                                        infectionProb);
+            immigrants[j].statesCount[i + 1] += infectedTodayImmigrantCell;
+            immigrants[j].statesCount[i] -= infectedTodayImmigrantCell;
+          } else {
+            immigrants[j].statesCount[i + 1] += immigrants[j].statesCount[i];
+            immigrants[j].statesCount[i] = 0;
+          }
         }
       }
     }
@@ -240,6 +266,36 @@ function Grid() {
     return neighbours;
   }
 
+  // breadth-first search of closest city
+  this.findClosestBigCity = function() {
+    var resultJsonText = "{"
+    for (var i = 0; i < cells.length; i++) {
+      if (cells[i].populationLimit > 0) {
+        var queue = [];
+        var queuedIndices = {};
+        queuedIndices[i] = true;
+        queue.push(i);
+        var cityFound = false;
+        while (!cityFound) {
+          var index = queue.shift();
+          if (cells[index].populationCount() > averagePopulationCount && index != i) {
+            cityFound = true;
+            resultJsonText += i + ": " + index + ",\n";
+          }
+          var neighbours = this.getNeighbours(index);
+          for (var j = 0; j < neighbours.length; j++) {
+            if (!(neighbours[j] in queuedIndices) && cells[neighbours[j]].populationLimit > 0) {
+              queue.push(neighbours[j]);
+              queuedIndices[neighbours[j]] = true;
+            }
+          }
+        }
+      }
+    }
+    resultJsonText += "}"
+    console.log(resultJsonText);
+  }
+
 
   // Simulates immigrations.
   // Algorithm:
@@ -251,27 +307,59 @@ function Grid() {
   // 4. Move people to all neighbouring cell
   // 5. Repeat until all cells were chosen
   this.simImmigrations = function(config) {
-    this.immigrants = _.map(makeArrayOf(null, cells.length), function () {
-      return {infectious: 0, notInfectious: 0};
-    });
+    for(var i = 0; i < cells.length; i++) {
+      var currCell = cells[i];
+      if (currCell.populationLimit > 0) {
+        var neighbours = this.getNeighbours(i);
+        var closeCity = closestCity[i];
+        var closeCityExists = true;
+        if (currCell.populationCount() <= averagePopulationCount) {
+          neighbours.push(closeCity);
+          closeCityExists = false;
+        }
 
-    var randIndexes = _.map(cells, function(val, key){ return key});
-    randIndexes = shuffle(randIndexes);
-    for(var i = 0; i < randIndexes.length; i++) {
-      var currCell = cells[randIndexes[i]];
-      var neighbours = shuffle(this.getNeighbours(randIndexes[i]));
-      var infectiousMove = currCell.infectedCount() * config.illImmigrationRate / neighbours.length;
-      var notInfectiousMove = (currCell.populationCount() - currCell.infectedCount()) *
-        config.immigrationRate / neighbours.length;
-      for(var j = 0; j < neighbours.length; j++) {
-        var neighCell = cells[neighbours[j]];
-        if (neighCell.populationCount() + infectiousMove + notInfectiousMove < neighCell.populationLimit) {
-          this.immigrants[neighbours[j]].infectious += infectiousMove;
-          this.immigrants[neighbours[j]].notInfectious += notInfectiousMove;
+        for(var j = 0; j < neighbours.length; j++) {
+          var neighCell = cells[neighbours[j]];
+          if (neighCell.populationLimit > 0) {
+            if (!this.immigrants[neighbours[j]][i]) {
+              this.immigrants[neighbours[j]][i] = new Cell(null, null);
+            }
+            for (var k = 0; k < statesCountLength; k++ ) {
+              var immigrationRate = k > 0 && k < statesCountLength - 1 ? config.illImmigrationRate :
+                config.immigrationRate;
+              var toMove = Math.round(currCell.statesCount[k] * immigrationRate);
+              if (neighbours[j] == closeCity) {
+                toMove *= config.bigCityRate;
+              } else {
+                // uniformly distribute among neighbouring cells
+                toMove *= (1 - config.bigCityRate) / (neighbours.length - 1);
+              }
+              toMove = Math.round(toMove);
+              this.immigrants[neighbours[j]][i].statesCount[k] += toMove;
+              currCell.statesCount[k] -= toMove;
+            }
+          }
         }
       }
     }
-  }
+  };
+
+  this.simReturningImmigrations = function(config) {
+    for(var i = 0; i < cells.length; i++) {
+      var currCell = cells[i];
+      if (currCell.populationLimit > 0) {
+        for(var key in this.immigrants[i]) {
+          var neighCell = cells[key];
+          if (neighCell.populationLimit > 0) {
+            for (var k = 0; k < statesCountLength; k++ ) {
+              neighCell.statesCount[k] += this.immigrants[i][key].statesCount[k];
+              this.immigrants[i][key].statesCount[k] = 0;
+            }
+          }
+        }
+      }
+    }
+  };
 
   // Performs next step in the simulation.
   this.next = function(config) {
@@ -289,6 +377,7 @@ function Grid() {
       currCell.simInfections(config.contactInfectionRate, this.immigrants[i]);
       currCell.simRecoveries(config.recoveryRate);
     }
+    this.simReturningImmigrations(config);
     config.updateRecoveryRate();
     this.updateOverallCount();
   }
@@ -322,6 +411,30 @@ function Grid() {
       cells[key].setSusceptibleCount(value);
       cells[key].populationLimit = value * 2.5;
     }, this);
+
+    // access by [destination_cell][source_cell] returns Cell
+    this.immigrants = _.map(makeArrayOf(null, cells.length), function () {
+      return {};
+    });
+    for(var i = 0; i < cells.length; i++) {
+      var currCell = cells[i];
+      if (currCell.populationLimit > 0) {
+        var neighbours = this.getNeighbours(i);
+        // add big city to neighbours hash table
+        if (i in closestCity) {
+          neighbours.push(closestCity[i]);
+        }
+
+        for(var j = 0; j < neighbours.length; j++) {
+          var neighCell = cells[neighbours[j]];
+          if (neighCell.populationLimit > 0) {
+            if (!this.immigrants[i][neighbours[j]]) {
+              this.immigrants[i][neighbours[j]] = new Cell(null, null);
+            }
+          }
+        }
+      }
+    }
     this.updateOverallCount();
   }
   this.init();
@@ -427,7 +540,7 @@ function Plot() {
 function Configuration() {
 
   var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
-    "virusMorbidity", "contactInfectionRate"];
+    "virusMorbidity", "contactInfectionRate", "bigCityRate"];
     
 
   // Generate getters and setters
@@ -464,7 +577,7 @@ function Configuration() {
     var values;
     if (id == 1) {
       // influenza
-      values = [0.05, 0.02, 0.0001, 0.0001, 0.004, 0.6, 0.1, 0.008];
+      values = [0.15, 0.1, 0.0001, 0.0001, 0.004, 0.6, 0.5];
     }
     //else if(id == 2) {
       //// smallpox
