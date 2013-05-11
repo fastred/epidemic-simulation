@@ -105,7 +105,7 @@ function Cell(_populationCount, _populationLimit) {
       // move people between states in the backward order
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
         if (i === 0) {
-          var infectiousTodayInCell = Math.round(this.susceptibleCount() * infectionProb);
+          var infectiousTodayInCell = Math.floor(this.susceptibleCount() * infectionProb);
           this.statesCount[i + 1] += infectiousTodayInCell;
           this.statesCount[i] -= infectiousTodayInCell;
           // debug
