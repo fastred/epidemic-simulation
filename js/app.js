@@ -571,18 +571,20 @@ function Epidemic(_config, _grid, _picture) {
   };
 
   this.updateCellInfo = function(posX, posY) {
-    var cell = this.lastMouseOveredCell;
-    var $cellInfo = $("#cellInfo");
-    if (typeof posX !== 'undefined' && typeof posY !== 'undefined') {
-      $cellInfo.css("left", posX);
-      $cellInfo.css("top", posY);
+    if (this.lastMouseOveredCell) {
+      var cell = this.lastMouseOveredCell;
+      var $cellInfo = $("#cellInfo");
+      if (typeof posX !== 'undefined' && typeof posY !== 'undefined') {
+        $cellInfo.css("left", posX);
+        $cellInfo.css("top", posY);
+      }
+      $cellInfo.html("index: " + this.lastMouseOveredIndex +
+                     "<br>population: " + cell.populationCount() +
+                     "<br>susceptible: " + cell.susceptibleCount() + 
+                     "<br>incubated: " +
+                     cell.incubatedCount() + "<br>infected: " + cell.infectedCount() +
+                     "<br>recovered: " + cell.recoveredCount());
     }
-    $cellInfo.html("index: " + this.lastMouseOveredIndex +
-                   "<br>population: " + cell.populationCount() +
-                   "<br>susceptible: " + cell.susceptibleCount() + 
-                   "<br>incubated: " +
-                  cell.incubatedCount() + "<br>infected: " + cell.infectedCount() +
-                  "<br>recovered: " + cell.recoveredCount());
   };
 
   this.restart = function() {
