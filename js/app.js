@@ -38,11 +38,11 @@ function showAlert(msg) {
 // Global config
 
 var incubatedDays = 2;
-var infectedDays = 4;
-var recoveredIndex = 1 + incubatedDays + infectedDays;
+var infectiousDays = 4;
+var recoveredIndex = 1 + incubatedDays + infectiousDays;
 var incubatedIndex = 1;
-var infectedIndex = incubatedIndex + incubatedDays;
-var statesCountLength = 2 + incubatedDays + infectedDays;
+var infectiousIndex = incubatedIndex + incubatedDays;
+var statesCountLength = 2 + incubatedDays + infectiousDays;
 var newIncubatedDefaultPercentage = 0.05;
 var averagePopulationCount = 26000;
 
@@ -51,7 +51,7 @@ var averagePopulationCount = 26000;
 function Cell(_populationCount, _populationLimit) {
   // [0] is susceptible
   // [1..2] is incubated
-  // [3..6] is infected
+  // [3..6] is infectious
   // [7] is recovered
   this.statesCount = makeArrayOf(0, statesCountLength);
   this.statesCount[0] = _populationCount;
@@ -67,7 +67,7 @@ function Cell(_populationCount, _populationLimit) {
 
   // Simulates deaths caused by the virus (with given probability).
   this.simVirusMorbidity= function(prob) {
-    for (var i = incubatedIndex; i < infectedIndex + infectedDays; i++ ) {
+    for (var i = incubatedIndex; i < infectiousIndex + infectiousDays; i++ ) {
       var diedToday = Math.round(this.statesCount[i] * prob);
       this.statesCount[i] -= diedToday;
     }
@@ -86,32 +86,32 @@ function Cell(_populationCount, _populationLimit) {
     if (this.populationCount() > 0) {
       var immigrantsSusceptible = 0;
       var immigrantsIncubated = 0;
-      var immigrantsInfected = 0;
+      var immigrantsInfectious = 0;
       var immigrantsRecovered = 0;
       var immigrantsPopulation = 0;
       // immigrant counts (coming from different neighbours)
       for (var i in immigrants) {
         immigrantsSusceptible += immigrants[i].susceptibleCount();
         immigrantsIncubated += immigrants[i].incubatedCount();
-        immigrantsInfected += immigrants[i].infectedCount();
+        immigrantsInfectious += immigrants[i].infectiousCount();
         immigrantsRecovered += immigrants[i].recoveredCount();
       }
       immigrantsPopulation += immigrantsSusceptible + immigrantsIncubated +
-        immigrantsInfected + immigrantsRecovered;
+        immigrantsInfectious + immigrantsRecovered;
       // probability of infection, uses local and immigrant population data
-      var infectionProb = 1 - Math.exp(-prob * (this.infectedCount() + immigrantsInfected) /
+      var infectionProb = 1 - Math.exp(-prob * (this.infectiousCount() + immigrantsInfectious) /
         (this.populationCount() + immigrantsPopulation));
 
       // move people between states in the backward order
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
         if (i === 0) {
-          var infectedTodayInCell = Math.round(this.susceptibleCount() * infectionProb);
-          this.statesCount[i + 1] += infectedTodayInCell;
-          this.statesCount[i] -= infectedTodayInCell;
+          var infectiousTodayInCell = Math.round(this.susceptibleCount() * infectionProb);
+          this.statesCount[i + 1] += infectiousTodayInCell;
+          this.statesCount[i] -= infectiousTodayInCell;
           // debug
           //if (index == 993) {
-            //console.log("infectedtoday: " + infectedTodayInCell + "\nimmigrantsinfected " +
-                        //immigrantsInfected + "\nthisinfected: " + this.infectedCount() +
+            //console.log("infectioustoday: " + infectiousTodayInCell + "\nimmigrantsinfectious " +
+                        //immigrantsInfectious + "\nthisinfectious: " + this.infectiousCount() +
                        //"\nimmigrantpopulation: " + immigrantsPopulation +
                        //"\nthispopulation: " + this.populationCount());
             //console.log(immigrants);
@@ -124,10 +124,10 @@ function Cell(_populationCount, _populationLimit) {
         // after infections are simulated
         for (var j in immigrants) {
           if (i === 0) {
-            var infectedTodayImmigrantCell = Math.round(immigrants[j].susceptibleCount() *
+            var infectiousTodayImmigrantCell = Math.round(immigrants[j].susceptibleCount() *
                                                         infectionProb);
-            immigrants[j].statesCount[i + 1] += infectedTodayImmigrantCell;
-            immigrants[j].statesCount[i] -= infectedTodayImmigrantCell;
+            immigrants[j].statesCount[i + 1] += infectiousTodayImmigrantCell;
+            immigrants[j].statesCount[i] -= infectiousTodayImmigrantCell;
           } else {
             immigrants[j].statesCount[i + 1] += immigrants[j].statesCount[i];
             immigrants[j].statesCount[i] = 0;
@@ -156,8 +156,8 @@ function Cell(_populationCount, _populationLimit) {
                     }, 0);
   };
 
-  this.infectedCount = function() {
-    return _.reduce(this.statesCount.slice(infectedIndex, infectedIndex + infectedDays),
+  this.infectiousCount = function() {
+    return _.reduce(this.statesCount.slice(infectiousIndex, infectiousIndex + infectiousDays),
                     function(memo, num) {
                       return memo + num;
                     }, 0);
@@ -171,9 +171,9 @@ function Cell(_populationCount, _populationLimit) {
   };
 
   this.addNewIncubated = function(percentage) {
-    var infected = Math.round(this.statesCount[0] * percentage);
-    this.statesCount[0] -= infected;
-    this.statesCount[1] += infected;
+    var infectious = Math.round(this.statesCount[0] * percentage);
+    this.statesCount[0] -= infectious;
+    this.statesCount[1] += infectious;
   };
 }
 
@@ -186,7 +186,7 @@ function Grid() {
   var cells = new Array(cellsCount);
   var populationOverallCount = 0;
   var incubatedOverallCount = 0;
-  var infectedOverallCount = 0;
+  var infectiousOverallCount = 0;
   var recoveredOverallCount = 0;
   var susceptibleOverallCount = 0;
 
@@ -202,8 +202,8 @@ function Grid() {
   this.__defineGetter__("populationOverallCount", function(){
     return populationOverallCount;
   });
-  this.__defineGetter__("infectedOverallCount", function(){
-    return infectedOverallCount;
+  this.__defineGetter__("infectiousOverallCount", function(){
+    return infectiousOverallCount;
   });
   this.__defineGetter__("incubatedOverallCount", function(){
     return incubatedOverallCount;
@@ -215,13 +215,13 @@ function Grid() {
     return susceptibleOverallCount;
   });
 
-  // Updates counts of total population and infected people.
+  // Updates counts of total population and infectious people.
   this.updateOverallCount = function() {
     populationOverallCount = _.reduce(cells, function(memo, cell) {
       return memo + cell.populationCount();
     }, 0);
-    infectedOverallCount = _.reduce(cells, function(memo, cell) {
-      return memo + cell.infectedCount();
+    infectiousOverallCount = _.reduce(cells, function(memo, cell) {
+      return memo + cell.infectiousCount();
     }, 0);
     incubatedOverallCount = _.reduce(cells, function(memo, cell) {
       return memo + cell.incubatedCount();
@@ -396,7 +396,7 @@ function Grid() {
     this.updateOverallCount();
   }
 
-  this.setAsInfected = function(index) {
+  this.setAsInfectious = function(index) {
     cells[index].addNewIncubated(newIncubatedDefaultPercentage);
     this.updateOverallCount();
   }
@@ -404,7 +404,7 @@ function Grid() {
   this.loadState = function(loaded) {
     for(var i = 0; i < cellsCount; i++) {
       cells[i].populationCount = loaded[i].populationCount;
-      cells[i].infectedCount = loaded[i].infectedCount;
+      cells[i].infectiousCount = loaded[i].infectiousCount;
       cells[i].populationLimit = loaded[i].populationLimit;
     }
     this.updateOverallCount();
@@ -480,7 +480,7 @@ function Picture(_cols, _rows) {
   this.updateWithNewData = function(cells) {
     for(i = 0; i < cellsCount; i++) {
       if (cells[i].populationLimit > 0) {
-        var percentage = (cells[i].infectedCount() + cells[i].incubatedCount()) / cells[i].populationCount();
+        var percentage = (cells[i].infectiousCount() + cells[i].incubatedCount()) / cells[i].populationCount();
         ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
         ctx.clearRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
                       sizeY, sizeX, sizeY);
@@ -519,15 +519,15 @@ function Plot() {
   };
   this.historySusceptible = new Array();
   this.historyRecovered = new Array();
-  this.historyInfected = new Array();
+  this.historyInfectious = new Array();
   var plot = $.plot($("#plot"), [], options);
 
   // Adds new data to the plot and refresh it.
-  this.updateWithNewData = function(susceptible, infected, recovered) {
+  this.updateWithNewData = function(susceptible, infectious, recovered) {
     var count = this.historySusceptible.length;
     this.historySusceptible.push([count, susceptible]);
     this.historyRecovered.push([count, recovered]);
-    this.historyInfected.push([count, infected]);
+    this.historyInfectious.push([count, infectious]);
     this.refresh();
   }
 
@@ -537,9 +537,9 @@ function Plot() {
                  //data: this.historyRecovered },
       //{ label: "Susceptible", color: "rgb(0, 0, 0)",
                  //data: this.historySusceptible },
-                 { label: "Incubated & Infected",
+                 { label: "Incubated & Infectious",
                    color: "rgb(185, 0, 0)",
-                   data: this.historyInfected}]);
+                   data: this.historyInfectious}]);
     plot.setupGrid();
     plot.draw();
   }
@@ -647,16 +647,16 @@ function Epidemic(_config, _grid, _picture) {
     this.interval = setInterval(function() { that.nextStep()}, 50 );
   }
 
-  // Show current stats (day, population, infected) under the map.
+  // Show current stats (day, population, infectious) under the map.
   this.showStats = function() {
     var pop = Math.round(grid.populationOverallCount/10000)/100;
     var inc = Math.round(grid.incubatedOverallCount/10000)/100;
-    var inf = Math.round(grid.infectedOverallCount/10000)/100;
+    var inf = Math.round(grid.infectiousOverallCount/10000)/100;
     var rec = Math.round(grid.recoveredOverallCount/10000)/100;
     $("#iterationInfo div:eq(0)").html("Day:<br>" + iterationNumber);
     $("#iterationInfo div:eq(1)").html("Population:<br>" + pop + "M");
     $("#iterationInfo div:eq(2)").html("Incubated:<br>" + inc + "M");
-    $("#iterationInfo div:eq(3)").html("Infected:<br>" + inf + "M");
+    $("#iterationInfo div:eq(3)").html("Infectious:<br>" + inf + "M");
     $("#iterationInfo div:eq(4)").html("Recovered:<br>" + rec + "M");
   }
 
@@ -665,7 +665,7 @@ function Epidemic(_config, _grid, _picture) {
     grid.next(config);
     picture.updateWithNewData(grid.cells);
     plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
-                           grid.infectedOverallCount, grid.recoveredOverallCount);
+                           grid.infectiousOverallCount, grid.recoveredOverallCount);
     iterationNumber++;
     this.showStats();
     this.updateCellInfo(null, null);
@@ -677,9 +677,9 @@ function Epidemic(_config, _grid, _picture) {
   }
 
   // This method is called when user clicks on the map.
-  this.infectedUpdated = function(event) {
+  this.infectiousUpdated = function(event) {
     var pos = picture.getClickedCellPosition(event);
-    grid.setAsInfected(pos.index);
+    grid.setAsInfectious(pos.index);
     picture.updateWithNewData(grid.cells);
     this.showStats();
   }
@@ -704,7 +704,7 @@ function Epidemic(_config, _grid, _picture) {
                      "<br>population: " + cell.populationCount() +
                      "<br>susceptible: " + cell.susceptibleCount() + 
                      "<br>incubated: " +
-                     cell.incubatedCount() + "<br>infected: " + cell.infectedCount() +
+                     cell.incubatedCount() + "<br>infectious: " + cell.infectiousCount() +
                      "<br>recovered: " + cell.recoveredCount());
     }
   };
@@ -713,7 +713,7 @@ function Epidemic(_config, _grid, _picture) {
     grid.resetCells();
     iterationNumber = 0;
     plot.historyOverall = new Array();
-    plot.historyInfected = new Array();
+    plot.historyInfectious = new Array();
     plot.refresh();
     this.init();
     this.showStats();
@@ -726,7 +726,7 @@ function Epidemic(_config, _grid, _picture) {
     state["cells"] = grid.cells;
     state["iterationNumber"] = iterationNumber;
     state["historyOverall"] = plot.historyOverall;
-    state["historyInfected"] = plot.historyInfected;
+    state["historyInfectious"] = plot.historyInfectious;
     state["config"] = config;
     try {
       localStorage[id] = JSON.stringify(state);
@@ -750,7 +750,7 @@ function Epidemic(_config, _grid, _picture) {
       grid.loadState(state.cells);
       iterationNumber = state.iterationNumber;
       plot.historyOverall = state["historyOverall"];
-      plot.historyInfected = state["historyInfected"];
+      plot.historyInfectious = state["historyInfectious"];
       config.loadSavedSettings(state["config"]);
       plot.refresh();
       this.init();
@@ -888,9 +888,9 @@ $(document).ready(function(){
 
   var mouseHolding;
   $("#picture").mousedown(function(event){
-    epidemic.infectedUpdated(event);
+    epidemic.infectiousUpdated(event);
     mouseHolding = setInterval(function() {
-      epidemic.infectedUpdated(event);
+      epidemic.infectiousUpdated(event);
       epidemic.showCellInfo(event);
     }, 75 );
     epidemic.showCellInfo(event);
