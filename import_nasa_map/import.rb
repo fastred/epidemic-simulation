@@ -19,6 +19,8 @@ end
 puts arr.size
 puts arr[10].size
 output = Array.new()
+# 4 and 8 for 36x36
+# 2 and 4 for 72x72
 row_divider = 4
 col_divider = 8
 
@@ -62,13 +64,17 @@ def sum_arr (arr)
 end
 
 def export_to_json( arr )
+  result = "var cellsPopulation = {"
   counter = 0
   (0...(arr.size)).to_a.each do |row|
     (0...(arr[row].size)).to_a.each do |col|
-      puts counter.to_i.to_s + ": " + arr[row][col].to_s + ", "
+      result += counter.to_i.to_s + ": " + arr[row][col].to_s
+      result += ",\n" if counter < arr.size*arr[row].size - 1
       counter += 1
     end
   end
+  result += "};\n\n"
+  return result
 end
 
 
@@ -77,5 +83,5 @@ puts "sum: " + sum_arr(output).to_s
 puts output.size
 puts output[0].size
 
-export_to_json output
-
+json = export_to_json(output)
+File.open("../js/polish_data.js", 'w') { |file| file.write(json) }
