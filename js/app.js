@@ -82,7 +82,7 @@ function Cell(_populationCount, _populationLimit) {
   }
 
   // Simulates new infections (with given probability).
-  this.simInfections = function(prob, immigrants) {
+  this.simInfections = function(index, prob, immigrants) {
     if (this.populationCount() > 0) {
       var immigrantsSusceptible = 0;
       var immigrantsIncubated = 0;
@@ -95,17 +95,27 @@ function Cell(_populationCount, _populationLimit) {
         immigrantsIncubated += immigrants[i].incubatedCount();
         immigrantsInfected += immigrants[i].infectedCount();
         immigrantsRecovered += immigrants[i].recoveredCount();
-        immigrantsPopulation += immigrantsSusceptible + immigrantsIncubated +
-          immigrantsInfected + immigrantsRecovered;
       }
-      var infectionProb = prob * (this.infectedCount() + immigrantsInfected) /
-        (this.populationCount() + immigrantsPopulation);
+      immigrantsPopulation += immigrantsSusceptible + immigrantsIncubated +
+        immigrantsInfected + immigrantsRecovered;
+        if (index == 993) {
+          console.log(immigrantsPopulation);
+        }
+      var infectionProb = 1 - Math.exp(-prob * (this.infectedCount() + immigrantsInfected) /
+        (this.populationCount() + immigrantsPopulation));
 
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
         if (i === 0) {
           var infectedTodayInCell = Math.round(this.susceptibleCount() * infectionProb);
           this.statesCount[i + 1] += infectedTodayInCell;
           this.statesCount[i] -= infectedTodayInCell;
+          if (index == 993) {
+            console.log("infectedtoday: " + infectedTodayInCell + "\nimmigrantsinfected " +
+                        immigrantsInfected + "\nthisinfected: " + this.infectedCount() +
+                       "\nimmigrantpopulation: " + immigrantsPopulation +
+                       "\nthispopulation: " + this.populationCount());
+            console.log(immigrants);
+          }
         } else {
           this.statesCount[i + 1] += this.statesCount[i];
           this.statesCount[i] = 0;
@@ -250,18 +260,19 @@ function Grid() {
       neighbours.push(index - 1); //left
       possibleLeft = true;
     }
-    if (possibleUp && possibleRight) {
-      neighbours.push(index - colsCount + 1);
-    }
-    if (possibleUp && possibleLeft) {
-      neighbours.push(index - colsCount - 1);
-    }
-    if (possibleDown && possibleRight) {
-      neighbours.push(index + colsCount + 1);
-    }
-    if (possibleDown && possibleLeft) {
-      neighbours.push(index + colsCount - 1);
-    }
+    // Moore neighbourhood
+    //if (possibleUp && possibleRight) {
+      //neighbours.push(index - colsCount + 1);
+    //}
+    //if (possibleUp && possibleLeft) {
+      //neighbours.push(index - colsCount - 1);
+    //}
+    //if (possibleDown && possibleRight) {
+      //neighbours.push(index + colsCount + 1);
+    //}
+    //if (possibleDown && possibleLeft) {
+      //neighbours.push(index + colsCount - 1);
+    //}
 
     return neighbours;
   }
@@ -274,18 +285,20 @@ function Grid() {
         var queue = [];
         var queuedIndices = {};
         queuedIndices[i] = true;
-        queue.push(i);
+        queue.push({ind: i, dist: 0});
         var cityFound = false;
         while (!cityFound) {
-          var index = queue.shift();
+          var obj = queue.shift();
+          var index = obj.ind;
+          var distance = obj.dist;
           if (cells[index].populationCount() > averagePopulationCount && index != i) {
             cityFound = true;
-            resultJsonText += i + ": " + index + ",\n";
+            resultJsonText += i + ": {ind: " + index + ", dist: " + distance + "},\n";
           }
           var neighbours = this.getNeighbours(index);
           for (var j = 0; j < neighbours.length; j++) {
             if (!(neighbours[j] in queuedIndices) && cells[neighbours[j]].populationLimit > 0) {
-              queue.push(neighbours[j]);
+              queue.push({ind: neighbours[j], dist: distance + 1});
               queuedIndices[neighbours[j]] = true;
             }
           }
@@ -311,12 +324,13 @@ function Grid() {
       var currCell = cells[i];
       if (currCell.populationLimit > 0) {
         var neighbours = this.getNeighbours(i);
-        var closeCity = closestCity[i];
-        var closeCityExists = true;
-        if (currCell.populationCount() <= averagePopulationCount) {
-          neighbours.push(closeCity);
-          closeCityExists = false;
-        }
+        var closeCityObj = closestCity[i];
+        var closeCityExists = false;
+        //if (currCell.populationCount() < averagePopulationCount && closeCityObj.dist == 2 ||
+           //closeCityObj == 3) {
+          //neighbours.push(closeCityObj.ind);
+          //closeCityExists = true;
+        //}
 
         for(var j = 0; j < neighbours.length; j++) {
           var neighCell = cells[neighbours[j]];
@@ -324,24 +338,35 @@ function Grid() {
             if (!this.immigrants[neighbours[j]][i]) {
               this.immigrants[neighbours[j]][i] = new Cell(null, null);
             }
+            var immigrantFromCellSum = 0;
             for (var k = 0; k < statesCountLength; k++ ) {
               var immigrationRate = k > 0 && k < statesCountLength - 1 ? config.illImmigrationRate :
                 config.immigrationRate;
               var toMove = Math.round(currCell.statesCount[k] * immigrationRate);
-              if (neighbours[j] == closeCity) {
-                toMove *= config.bigCityRate;
+              if (closeCityExists) {
+                if (neighbours[j] == closeCityObj.ind) {
+                  toMove *= config.bigCityRate;
+                } else {
+                  // uniformly distribute among neighbouring cells
+                  toMove *= (1 - config.bigCityRate) / (neighbours.length - 1);
+                }
               } else {
-                // uniformly distribute among neighbouring cells
-                toMove *= (1 - config.bigCityRate) / (neighbours.length - 1);
+                toMove /= neighbours.length;
               }
-              toMove = Math.round(toMove);
+              toMove = Math.floor(toMove);
               this.immigrants[neighbours[j]][i].statesCount[k] += toMove;
               currCell.statesCount[k] -= toMove;
+              immigrantFromCellSum += toMove;
+            }
+            if (neighbours[j] == 993) {
+              console.log(i + ": " + immigrantFromCellSum);
+              console.log(this.immigrants[993][992].statesCount[0]);
             }
           }
         }
       }
     }
+    console.log("\n");
   };
 
   this.simReturningImmigrations = function(config) {
@@ -374,7 +399,7 @@ function Grid() {
     // Simulates new infections. Then simulates recoveries.
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
-      currCell.simInfections(config.contactInfectionRate, this.immigrants[i]);
+      currCell.simInfections(i, config.contactInfectionRate, this.immigrants[i]);
       currCell.simRecoveries(config.recoveryRate);
     }
     this.simReturningImmigrations(config);
