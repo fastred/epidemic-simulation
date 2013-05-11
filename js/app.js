@@ -44,7 +44,7 @@ var incubatedIndex = 1;
 var infectiousIndex = incubatedIndex + incubatedDays;
 var statesCountLength = 2 + incubatedDays + infectiousDays;
 var newIncubatedDefaultPercentage = 0.05;
-var averagePopulationCount = 26000;
+var commutingCityTreshold = 76000;
 
 //# Cell class
 // This class represents one cell in the grid.
@@ -274,7 +274,8 @@ function Grid() {
 
   // breadth-first search of closest city
   this.findClosestBigCity = function() {
-    var resultJsonText = "{";
+    closestCity = {};
+    //var resultJsonText = "{";
     for (var i = 0; i < cells.length; i++) {
       if (cells[i].populationLimit > 0) {
         var queue = [];
@@ -286,9 +287,10 @@ function Grid() {
           var obj = queue.shift();
           var index = obj.ind;
           var distance = obj.dist;
-          if (cells[index].populationCount() > averagePopulationCount && index != i) {
+          if (cells[index].populationCount() > commutingCityTreshold && index != i) {
             cityFound = true;
-            resultJsonText += i + ": {ind: " + index + ", dist: " + distance + "},\n";
+            //resultJsonText += i + ": {ind: " + index + ", dist: " + distance + "},\n";
+            closestCity[i] = {ind: index, dist: distance};
           }
           var neighbours = this.getNeighbours(index);
           for (var j = 0; j < neighbours.length; j++) {
@@ -300,8 +302,8 @@ function Grid() {
         }
       }
     }
-    resultJsonText += "}";
-    console.log(resultJsonText);
+    //resultJsonText += "}";
+    //console.log(resultJsonText);
   };
 
 
@@ -323,7 +325,7 @@ function Grid() {
         var neighbours = this.getNeighbours(i);
         var closeCityObj = closestCity[i];
         var closeCityExists = false;
-        if (currCell.populationCount() <= averagePopulationCount && closeCityObj &&
+        if (currCell.populationCount() <= commutingCityTreshold && closeCityObj &&
             closeCityObj.dist >= 2 && closeCityObj <= 4) {
           neighbours.push(closeCityObj.ind);
           closeCityExists = true;
@@ -440,6 +442,7 @@ function Grid() {
         }
       }
     }
+    this.findClosestBigCity();
     this.updateOverallCount();
   }
   this.init();
