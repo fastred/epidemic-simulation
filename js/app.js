@@ -158,6 +158,7 @@ function Grid() {
   var incubatedOverallCount = 0;
   var infectedOverallCount = 0;
   var recoveredOverallCount = 0;
+  var susceptibleOverallCount = 0;
 
   this.__defineGetter__("rowsCount", function(){
     return rowsCount;
@@ -180,6 +181,9 @@ function Grid() {
   this.__defineGetter__("recoveredOverallCount", function(){
     return recoveredOverallCount;
   });
+  this.__defineGetter__("susceptibleOverallCount", function(){
+    return susceptibleOverallCount;
+  });
 
   // Updates counts of total population and infected people.
   this.updateOverallCount = function() {
@@ -194,6 +198,9 @@ function Grid() {
     }, 0);
     recoveredOverallCount = _.reduce(cells, function(memo, cell) {
       return memo + cell.recoveredCount();
+    }, 0);
+    susceptibleOverallCount = _.reduce(cells, function(memo, cell) {
+      return memo + cell.susceptibleCount();
     }, 0);
   };
 
@@ -388,38 +395,29 @@ function Plot() {
     series: { shadowSize: 0 }, // drawing is faster without shadows
     xaxis: { show: true }
   };
-  var historyOverall = new Array();
-  var historyInfected = new Array();
+  this.historySusceptible = new Array();
+  this.historyRecovered = new Array();
+  this.historyInfected = new Array();
   var plot = $.plot($("#plot"), [], options);
 
-  this.__defineGetter__("historyOverall", function(){
-    return historyOverall;
-  });
-  this.__defineSetter__("historyOverall", function(val){
-    historyOverall = val;
-  });
-  this.__defineGetter__("historyInfected", function(){
-    return historyInfected;
-  });
-  this.__defineSetter__("historyInfected", function(val){
-    historyInfected = val;
-  });
-
   // Adds new data to the plot and refresh it.
-  this.updateWithNewData = function(overall, infected) {
-    var count = historyOverall.length;
-    historyOverall.push([count, overall]);
-    historyInfected.push([count, infected]);
+  this.updateWithNewData = function(susceptible, infected, recovered) {
+    var count = this.historySusceptible.length;
+    this.historySusceptible.push([count, susceptible]);
+    this.historyRecovered.push([count, recovered]);
+    this.historyInfected.push([count, infected]);
     this.refresh();
   }
 
   this.refresh = function() {
     plot.setData([
-      //{ label: "Country population", color: "rgb(0, 185, 0)",
-                 //data: historyOverall },
+      //{ label: "Recovered", color: "rgb(0, 185, 0)",
+                 //data: this.historyRecovered },
+      //{ label: "Susceptible", color: "rgb(0, 0, 0)",
+                 //data: this.historySusceptible },
                  { label: "Incubated & Infected",
                    color: "rgb(185, 0, 0)",
-                   data: historyInfected}]);
+                   data: this.historyInfected}]);
     plot.setupGrid();
     plot.draw();
   }
@@ -543,8 +541,8 @@ function Epidemic(_config, _grid, _picture) {
   this.nextStep = function() {
     grid.next(config);
     picture.updateWithNewData(grid.cells);
-    plot.updateWithNewData(grid.populationOverallCount, grid.incubatedOverallCount +
-                           grid.infectedOverallCount);
+    plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
+                           grid.infectedOverallCount, grid.recoveredOverallCount);
     iterationNumber++;
     this.showStats();
     this.updateCellInfo(null, null);
