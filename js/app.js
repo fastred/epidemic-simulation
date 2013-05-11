@@ -182,7 +182,7 @@ function Cell(_populationCount, _populationLimit) {
 // It represents grid of cells.
 function Grid() {
   var rowsCount = 40;
-  var colsCount = rowsCount;
+  var colsCount = 40;
   var cellsCount = rowsCount * colsCount;
   var cells = new Array(cellsCount);
   var populationOverallCount = 0;
@@ -478,9 +478,9 @@ function Picture(_cols, _rows) {
       if (cells[i].populationLimit > 0) {
         var percentage = (cells[i].infectiousCount() + cells[i].incubatedCount()) / cells[i].populationCount();
         ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
-        ctx.clearRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
+        ctx.clearRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
                       sizeY, sizeX, sizeY);
-        ctx.fillRect((i % rowsCount) * sizeX, Math.floor(i / rowsCount) *
+        ctx.fillRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
                      sizeY, sizeX, sizeY);
       }
     }
