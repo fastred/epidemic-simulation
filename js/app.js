@@ -712,6 +712,11 @@ function Epidemic(_config, _grid, _picture) {
                      "<br>incubated: " +
                      cell.incubatedCount() + "<br>infectious: " + cell.infectiousCount() +
                      "<br>recovered: " + cell.recoveredCount());
+      if (cell.populationLimit === 0) {
+        $cellInfo.hide();
+      } else {
+        $cellInfo.show();
+      }
     }
   };
 
