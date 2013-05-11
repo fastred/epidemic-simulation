@@ -255,18 +255,18 @@ function Grid() {
       possibleLeft = true;
     }
     // Moore neighbourhood
-    //if (possibleUp && possibleRight) {
-      //neighbours.push(index - colsCount + 1);
-    //}
-    //if (possibleUp && possibleLeft) {
-      //neighbours.push(index - colsCount - 1);
-    //}
-    //if (possibleDown && possibleRight) {
-      //neighbours.push(index + colsCount + 1);
-    //}
-    //if (possibleDown && possibleLeft) {
-      //neighbours.push(index + colsCount - 1);
-    //}
+    if (possibleUp && possibleRight) {
+      neighbours.push(index - colsCount + 1);
+    }
+    if (possibleUp && possibleLeft) {
+      neighbours.push(index - colsCount - 1);
+    }
+    if (possibleDown && possibleRight) {
+      neighbours.push(index + colsCount + 1);
+    }
+    if (possibleDown && possibleLeft) {
+      neighbours.push(index + colsCount - 1);
+    }
 
     return neighbours;
   };
