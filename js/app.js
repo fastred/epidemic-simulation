@@ -420,9 +420,8 @@ function Grid() {
 
   this.init = function() {
     // constructor
-    var avg = 26000;
     for(var i = 0; i < cellsCount; i++) {
-      cells[i] = new Cell(avg, avg * 2.5);
+      cells[i] = new Cell(averagePopulationCount, averagePopulationCount * 2.5);
     }
     _.each(cellsPopulation, function(value, key) {
       cells[key].setSusceptibleCount(value);
