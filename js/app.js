@@ -326,7 +326,7 @@ function Grid() {
         var closeCityObj = closestCity[i];
         var closeCityExists = false;
         if (currCell.populationCount() <= commutingCityTreshold && closeCityObj &&
-            closeCityObj.dist >= 2 && closeCityObj <= 4) {
+            closeCityObj.dist >= 1 && closeCityObj <= 3) {
           neighbours.push(closeCityObj.ind);
           closeCityExists = true;
         }
