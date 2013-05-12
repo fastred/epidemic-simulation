@@ -326,10 +326,16 @@ function Grid() {
         var closeCityObj = closestCity[i];
         var closeCityExists = false;
         if (currCell.populationCount() <= commutingCityTreshold && closeCityObj &&
-            closeCityObj.dist >= 1 && closeCityObj <= 3) {
-          neighbours.push(closeCityObj.ind);
+            closeCityObj.dist >= 1 && closeCityObj.dist <= 3) {
+          // if dist == 1 then city is already in neighbours
+          if (closeCityObj.dist > 1) {
+            neighbours.push(closeCityObj.ind);
+          }
           closeCityExists = true;
         }
+
+        // precalculate counts of immigrants and then execute
+        var precalculatedMoves = {}
 
         for(var j = 0; j < neighbours.length; j++) {
           var neighCell = cells[neighbours[j]];
@@ -351,9 +357,22 @@ function Grid() {
               } else {
                 toMove /= neighbours.length;
               }
-              toMove = Math.round(toMove);
-              this.immigrants[neighbours[j]][i].statesCount[k] += toMove;
-              currCell.statesCount[k] -= toMove;
+              toMove = Math.floor(toMove);
+              if (!(neighbours[j] in precalculatedMoves)) {
+                precalculatedMoves[neighbours[j]] = {};
+              }
+              precalculatedMoves[neighbours[j]][k] = toMove;
+            }
+          }
+        }
+        for (var neighbourId in precalculatedMoves) {
+          for (var stateId in precalculatedMoves[neighbourId]) {
+            this.immigrants[neighbourId][i].statesCount[stateId] +=
+              precalculatedMoves[neighbourId][stateId];
+            currCell.statesCount[stateId] -=
+              precalculatedMoves[neighbourId][stateId];
+            if (currCell.statesCount[stateId] < 0) {
+              throw new Error("Fatal error in simImmigrations!");
             }
           }
         }
