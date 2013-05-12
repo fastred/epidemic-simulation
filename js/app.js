@@ -931,14 +931,16 @@ $(document).ready(function(){
   });
 
   $("#picture").click(function(event) {
-    $div = $("#cellAddIllForm");
-    $div.show();
-    $div.css("left", event.pageX);
-    $div.css("top", event.pageY);
-    $input = $("#illCount");
     var cell = epidemic.getClickedCellInfo(event);
-    $input.attr("min", 0);
-    $input.attr("max", cell.susceptibleCount());
+    if (cell.populationLimit > 0) {
+      $div = $("#cellAddIllForm");
+      $div.show();
+      $div.css("left", event.pageX);
+      $div.css("top", event.pageY);
+      $input = $("#illCount");
+      $input.attr("min", 0);
+      $input.attr("max", cell.susceptibleCount());
+    }
   });
 
   $("#picture").mousemove(function(event) {
