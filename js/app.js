@@ -858,6 +858,20 @@ $(document).ready(function(){
     showAlert("Simulation has been restarted.");
   });
 
+  $(document).keypress(function(event) {
+    switch(event.which) {
+      case 115: startButton.click();
+      break;
+      case 112: pauseButton.click();
+      break;
+      case 110: oneStepButton.click();
+      break;
+      case 114: restartButton.click();
+      break;
+    }
+  });
+
+
   // ## Import and export buttons' events.
   exportImageButton.click(function(event) {
     event.preventDefault();
