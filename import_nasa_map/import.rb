@@ -68,7 +68,9 @@ def export_to_json( arr )
   counter = 0
   (0...(arr.size)).to_a.each do |row|
     (0...(arr[row].size)).to_a.each do |col|
-      result += counter.to_i.to_s + ": " + arr[row][col].to_s
+      population = arr[row][col]
+      population = 0 if population < 50
+      result += counter.to_i.to_s + ": " + population.to_s
       result += ",\n" if counter < arr.size*arr[row].size - 1
       counter += 1
     end
