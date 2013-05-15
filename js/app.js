@@ -367,10 +367,13 @@ function Grid() {
         }
         for (var neighbourId in precalculatedMoves) {
           for (var stateId in precalculatedMoves[neighbourId]) {
-            this.immigrants[neighbourId][i].statesCount[stateId] +=
-              precalculatedMoves[neighbourId][stateId];
-            currCell.statesCount[stateId] -=
-              precalculatedMoves[neighbourId][stateId];
+            if (cells[neighbourId].populationCount() + precalculatedMoves[neighbourId][stateId] <
+                cells[neighbourId].populationLimit) {
+                  this.immigrants[neighbourId][i].statesCount[stateId] +=
+                    precalculatedMoves[neighbourId][stateId];
+                  currCell.statesCount[stateId] -=
+                    precalculatedMoves[neighbourId][stateId];
+                }
             if (currCell.statesCount[stateId] < 0) {
               throw new Error("Fatal error in simImmigrations!");
             }
