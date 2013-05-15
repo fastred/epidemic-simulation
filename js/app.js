@@ -34,6 +34,16 @@ function showAlert(msg) {
   }, 2000);
 }
 
+function randomizeProbWithNormalDistribution(mu) {
+  var prob = Math.random() * Math.sqrt(mu/100)+mu;
+  if (prob > 1) {
+    prob = 1;
+  }
+  if (prob < 0) {
+    prob = 0;
+  }
+  return prob;
+}
 
 // Global config
 
@@ -101,6 +111,9 @@ function Cell(_populationCount, _populationLimit) {
       // probability of infection, uses local and immigrant population data
       var infectionProb = 1 - Math.exp(-prob * (this.infectiousCount() + immigrantsInfectious) /
         (this.populationCount() + immigrantsPopulation));
+      if (infectionProb > 0.01 ) {
+        infectionProb = randomizeProbWithNormalDistribution(infectionProb);
+      }
 
       // move people between states in the backward order
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
