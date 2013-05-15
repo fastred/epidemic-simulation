@@ -122,7 +122,7 @@ function Cell(_populationCount, _populationLimit) {
           this.statesCount[i + 1] += infectiousTodayInCell;
           this.statesCount[i] -= infectiousTodayInCell;
           // debug
-          //if (index == 993) {
+          //if (index == 820) {
             //console.log("infectioustoday: " + infectiousTodayInCell + "\nimmigrantsinfectious " +
                         //immigrantsInfectious + "\nthisinfectious: " + this.infectiousCount() +
                        //"\nimmigrantpopulation: " + immigrantsPopulation +
