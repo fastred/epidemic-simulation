@@ -35,7 +35,8 @@ function showAlert(msg) {
 }
 
 function randomizeProbWithNormalDistribution(mu) {
-  var prob = Math.random() * Math.sqrt(mu/100)+mu;
+  var stddev = mu/30;
+  var prob = normal_random(mu, mu*mu);
   if (prob > 1) {
     prob = 1;
   }
@@ -44,6 +45,28 @@ function randomizeProbWithNormalDistribution(mu) {
   }
   return prob;
 }
+
+function normal_random(mean, variance) {
+  if (mean == undefined)
+    mean = 0.0;
+  if (variance == undefined)
+    variance = 1.0;
+  var V1, V2, S;
+  do {
+    var U1 = Math.random();
+    var U2 = Math.random();
+    V1 = 2 * U1 - 1;
+    V2 = 2 * U2 - 1;
+    S = V1 * V1 + V2 * V2;
+  } while (S > 1);
+
+  X = Math.sqrt(-2 * Math.log(S) / S) * V1;
+//  Y = Math.sqrt(-2 * Math.log(S) / S) * V2;
+  X = mean + Math.sqrt(variance) * X;
+//  Y = mean + Math.sqrt(variance) * Y ;
+  return X;
+  }
+
 
 // Global config
 
@@ -56,6 +79,7 @@ var statesCountLength = 2 + incubatedDays + infectiousDays;
 var newIncubatedDefaultPercentage = 0.05;
 var commutingCityTreshold = 76000;
 var startingSick = 400;
+var randomizedProbEnabled = true;
 
 //# Cell class
 // This class represents one cell in the grid.
@@ -112,9 +136,7 @@ function Cell(_populationCount, _populationLimit) {
       // probability of infection, uses local and immigrant population data
       var infectionProb = 1 - Math.exp(-prob * (this.infectiousCount() + immigrantsInfectious) /
         (this.populationCount() + immigrantsPopulation));
-      if (infectionProb > 0.01 ) {
-        infectionProb = randomizeProbWithNormalDistribution(infectionProb);
-      }
+      infectionProb = randomizeProbWithNormalDistribution(infectionProb);
 
       // move people between states in the backward order
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
