@@ -136,11 +136,13 @@ function Cell(_populationCount, _populationLimit) {
       // probability of infection, uses local and immigrant population data
       var infectionProb = 1 - Math.exp(-prob * (this.infectiousCount() + immigrantsInfectious) /
         (this.populationCount() + immigrantsPopulation));
-      infectionProb = randomizeProbWithNormalDistribution(infectionProb);
 
       // move people between states in the backward order
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
         if (i === 0) {
+          // randomization
+          infectionProb = randomizedProbEnabled ? randomizeProbWithNormalDistribution(infectionProb) :
+            infectionProb;
           var infectiousTodayInCell = Math.floor(this.susceptibleCount() * infectionProb);
           this.statesCount[i + 1] += infectiousTodayInCell;
           this.statesCount[i] -= infectiousTodayInCell;
