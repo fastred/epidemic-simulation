@@ -55,6 +55,7 @@ var infectiousIndex = incubatedIndex + incubatedDays;
 var statesCountLength = 2 + incubatedDays + infectiousDays;
 var newIncubatedDefaultPercentage = 0.05;
 var commutingCityTreshold = 76000;
+var startingSick = 400;
 
 //# Cell class
 // This class represents one cell in the grid.
@@ -448,10 +449,23 @@ function Grid() {
     this.init();
   }
 
+  this.addRandomlyPlacedIll = function() {
+    var perCell = 15;
+    for (var i = 0; i < startingSick; i+=perCell) {
+      cells[Math.floor(Math.random()*cells.length)].statesCount[1] += perCell;
+    }
+    showAlert("Randomly infected " + startingSick + " people.");
+  };
+
   this.init = function() {
     // constructor
+    // constructor
+    this.nonEmptyCells = [];
     _.each(cellsPopulation, function(value, key) {
       cells[key] = new Cell(value, value * 2.5);
+      if (value > 0) {
+        this.nonEmptyCells.push(key);
+      }
     }, this);
 
     // access by [destination_cell][source_cell] returns Cell
@@ -976,6 +990,10 @@ $(document).ready(function(){
     epidemic.infectiousUpdate(parseInt($("#illCount").val(), 10));
     $("#illCount").attr("value", 0);
     $("#illSelectedCount").text(0);
+  });
+  $("#randomlyAddIll").text("Distribute randomly " + startingSick + " ill");
+  $("#randomlyAddIll").click(function(event) {
+    grid.addRandomlyPlacedIll();
   });
 
 
