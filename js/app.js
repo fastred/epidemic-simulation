@@ -597,15 +597,15 @@ function Plot() {
   };
   this.historySusceptible = new Array();
   this.historyRecovered = new Array();
-  this.historyInfectious = new Array();
+  this.historyIll = new Array();
   var plot = $.plot($("#plot"), [], options);
 
   // Adds new data to the plot and refresh it.
-  this.updateWithNewData = function(susceptible, infectious, recovered) {
+  this.updateWithNewData = function(susceptible, ill, recovered) {
     var count = this.historySusceptible.length;
     this.historySusceptible.push([count, susceptible]);
     this.historyRecovered.push([count, recovered]);
-    this.historyInfectious.push([count, infectious]);
+    this.historyIll.push([count, ill]);
     this.refresh();
   }
 
@@ -617,10 +617,19 @@ function Plot() {
                  //data: this.historySusceptible },
                  { label: "Incubated & Infectious",
                    color: "rgb(185, 0, 0)",
-                   data: this.historyInfectious}]);
+                   data: this.historyIll}]);
     plot.setupGrid();
     plot.draw();
   }
+
+  this.exportHistory = function() {
+    var result = "day,susceptible,ill,recovered\n";
+    for (var i=0; i < this.historySusceptible.length; i++) {
+      result += (i + 1) + "," + this.historySusceptible[i][1] + "," +
+        this.historyIll[i][1] + "," + this.historyRecovered[i][1] + "\n";
+    }
+    return result;
+  };
 }
 
 // # Configuration class
@@ -854,6 +863,10 @@ function Epidemic(_config, _grid, _picture) {
     delete localStorage[id];
   }
 
+  this.exportData = function() {
+    return plot.exportHistory();
+  };
+
   // constructor
   var config = _config;
   var grid = _grid;
@@ -1025,8 +1038,10 @@ $(document).ready(function(){
     grid.addRandomlyPlacedIll();
     epidemic.showStats();
   });
-
-
+  $("#exportPlotData").click(function(event) {
+    var blob = new Blob([epidemic.exportData()], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "history.csv");
+  });
 
   $("input:radio[name=providedEpidemics]").change(function(event) {
     event.preventDefault();
