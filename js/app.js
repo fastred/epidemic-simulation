@@ -67,6 +67,9 @@ function normal_random(mean, variance) {
   return X;
   }
 
+function numberWithThousandsFormatted(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
 
 // Global config
 
@@ -723,15 +726,15 @@ function Epidemic(_config, _grid, _picture) {
 
   // Show current stats (day, population, infectious) under the map.
   this.showStats = function() {
-    var pop = Math.round(grid.populationOverallCount/10000)/100;
-    var inc = Math.round(grid.incubatedOverallCount/10000)/100;
-    var inf = Math.round(grid.infectiousOverallCount/10000)/100;
-    var rec = Math.round(grid.recoveredOverallCount/10000)/100;
-    $("#iterationInfo div:eq(0)").html("Day:<br>" + iterationNumber);
-    $("#iterationInfo div:eq(1)").html("Population:<br>" + pop + "M");
-    $("#iterationInfo div:eq(2)").html("Incubated:<br>" + inc + "M");
-    $("#iterationInfo div:eq(3)").html("Infectious:<br>" + inf + "M");
-    $("#iterationInfo div:eq(4)").html("Recovered:<br>" + rec + "M");
+    var pop = grid.populationOverallCount;
+    var inc = grid.incubatedOverallCount;
+    var inf = grid.infectiousOverallCount;
+    var rec = grid.recoveredOverallCount;
+    $("#iterationInfo tr:eq(0) td:eq(1)").html(iterationNumber);
+    $("#iterationInfo tr:eq(1) td:eq(1)").html(numberWithThousandsFormatted(pop));
+    $("#iterationInfo tr:eq(2) td:eq(1)").html(numberWithThousandsFormatted(inc));
+    $("#iterationInfo tr:eq(3) td:eq(1)").html(numberWithThousandsFormatted(inf));
+    $("#iterationInfo tr:eq(4) td:eq(1)").html(numberWithThousandsFormatted(rec));
   }
 
   // Generates next step of the simulation.

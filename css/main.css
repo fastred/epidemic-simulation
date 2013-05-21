@@ -1,6 +1,7 @@
 .alert { position: fixed; }
 .text-center { text-align: center; }
 .lead { font-size: 18px; }
+.text-right { text-align: right; }
 #picture { position: absolute; }
-#plot { width: 940px; height: 200px; }
+#plot { width: 700px; height: 190px; }
 #cellInfo, #cellAddIllInfo { position: absolute; }

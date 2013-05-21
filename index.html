@@ -42,18 +42,6 @@
           <!--<a class="btn" id="loadState" href="#savesList" title="Load saved state" role="button" data-toggle="modal"><i class="icon-folder-open"></i></a>-->
         <!--</div>-->
       </div>
-      <div class="row" id="iterationInfo">
-        <div class="span1">
-        </div>
-        <div class="span1">
-        </div>
-        <div class="span1">
-        </div>
-        <div class="span1">
-        </div>
-        <div class="span1">
-        </div>
-      </div>
       <div id="cellInfo" class="popover bottom">
       </div>
       <div id="cellAddIllForm" class="popover top">
@@ -103,7 +91,18 @@
       </form>
     </div>
   </div>
-  <div id="plot"></div>
+  <div class="row">
+    <div class="span3">
+      <table class="table table-striped" id="iterationInfo">
+        <tr><td>Day:</td><td class="text-right">0</td></tr>
+        <tr><td>Populaton:</td><td></td></tr>
+        <tr><td>Incubated:</td><td></td></tr>
+        <tr><td>Infectious:</td><td></td></tr>
+        <tr><td>Recovered:</td><td></td></tr>
+      </table>
+    </div>
+    <div id="plot" class="span9"></div>
+  </div>
   <p>
   Map of Poland source: http://www.diva-gis.org/
   </p>
