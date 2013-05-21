@@ -82,6 +82,7 @@ var statesCountLength = 2 + incubatedDays + infectiousDays;
 var newIncubatedDefaultPercentage = 0.05;
 var commutingCityTreshold = 76000;
 var startingSick = 400;
+var startingSickPerCell = 16;
 var randomizedProbEnabled = true;
 
 //# Cell class
@@ -478,9 +479,8 @@ function Grid() {
   }
 
   this.addRandomlyPlacedIll = function() {
-    var perCell = 15;
-    for (var i = 0; i < startingSick; i+=perCell) {
-      cells[Math.floor(Math.random()*cells.length)].statesCount[1] += perCell;
+    for (var i = 0; i < startingSick; i+=startingSickPerCell ) {
+      cells[Math.floor(Math.random()*cells.length)].statesCount[1] += startingSickPerCell ;
     }
     this.updateOverallCount();
     showAlert("Randomly infected " + startingSick + " people.");
