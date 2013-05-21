@@ -34,9 +34,9 @@ function showAlert(msg) {
   }, 2000);
 }
 
-function randomizeProbWithNormalDistribution(mu) {
-  var stddev = mu/30;
-  var prob = normal_random(mu, mu*mu);
+function randomizeProbWithNormalDistribution(mu, varCoeff) {
+  var stddev = mu*varCoeff;
+  var prob = normal_random(mu, stddev*stddev);
   if (prob > 1) {
     prob = 1;
   }
@@ -120,8 +120,9 @@ function Cell(_populationCount, _populationLimit) {
   }
 
   // Simulates new infections (with given probability).
-  this.simInfections = function(index, prob, immigrants) {
+  this.simInfections = function(index, config, immigrants) {
     if (this.populationCount() > 0) {
+      var prob = config.contactInfectionRate;
       var immigrantsSusceptible = 0;
       var immigrantsIncubated = 0;
       var immigrantsInfectious = 0;
@@ -144,8 +145,8 @@ function Cell(_populationCount, _populationLimit) {
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
         if (i === 0) {
           // randomization
-          infectionProb = randomizedProbEnabled ? randomizeProbWithNormalDistribution(infectionProb) :
-            infectionProb;
+          infectionProb = randomizedProbEnabled ?
+            randomizeProbWithNormalDistribution(infectionProb, config.varCoeff) : infectionProb;
           var infectiousTodayInCell = Math.floor(this.susceptibleCount() * infectionProb);
           this.statesCount[i + 1] += infectiousTodayInCell;
           this.statesCount[i] -= infectiousTodayInCell;
@@ -455,7 +456,7 @@ function Grid() {
     // Simulates infections and recoveries
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
-      currCell.simInfections(i, config.contactInfectionRate, this.immigrants[i]);
+      currCell.simInfections(i, config, this.immigrants[i]);
     }
     this.simReturningImmigrations(config);
     config.updateRecoveryRate();
@@ -625,7 +626,7 @@ function Plot() {
 function Configuration() {
 
   var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
-    "virusMorbidity", "contactInfectionRate", "bigCityRate"];
+    "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff"];
     
 
   // Generate getters and setters
@@ -662,7 +663,7 @@ function Configuration() {
     var values;
     if (id == 1) {
       // influenza
-      values = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4];
+      values = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3];
     }
     //else if(id == 2) {
       //// smallpox
