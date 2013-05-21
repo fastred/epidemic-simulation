@@ -810,8 +810,7 @@ function Epidemic(_config, _grid, _picture) {
   this.restart = function() {
     grid.resetCells();
     iterationNumber = 0;
-    plot.historyOverall = new Array();
-    plot.historyInfectious = new Array();
+    plot = new Plot();
     plot.refresh();
     this.init();
     this.showStats();
