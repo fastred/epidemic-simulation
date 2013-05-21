@@ -482,6 +482,7 @@ function Grid() {
     for (var i = 0; i < startingSick; i+=perCell) {
       cells[Math.floor(Math.random()*cells.length)].statesCount[1] += perCell;
     }
+    this.updateOverallCount();
     showAlert("Randomly infected " + startingSick + " people.");
   };
 
@@ -1022,6 +1023,7 @@ $(document).ready(function(){
   $("#randomlyAddIll").text("Distribute randomly " + startingSick + " ill");
   $("#randomlyAddIll").click(function(event) {
     grid.addRandomlyPlacedIll();
+    epidemic.showStats();
   });
 
 
