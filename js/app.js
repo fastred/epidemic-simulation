@@ -457,7 +457,6 @@ function Grid() {
       currCell.simInfections(i, config, this.immigrants[i]);
     }
     this.simReturningImmigrations(config);
-    config.updateRecoveryRate();
     this.updateOverallCount();
   }
 
@@ -666,18 +665,6 @@ function Configuration() {
       }
       this[param] = val;
     };
-  }
-
-  // Calculates new recovery rate if the recovery improvement is set.
-  this.updateRecoveryRate = function() {
-    this.recoveryRate *= 1 + this.recoveryImprovement;
-    // Round to 4 decimals -- we have to do that, because form uses input type
-    // number with 'step' set to 0.0001, and it is the best precision available.
-    this.recoveryRate = Math.round(this.recoveryRate*10000)/10000
-    if (this.recoveryRate > 1) {
-      this.recoveryRate = 1;
-    }
-    $("#recoveryRate").val(this.recoveryRate);
   }
 
   // Loads predefined (provided by authors) settings for few diseases.
