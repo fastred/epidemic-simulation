@@ -485,6 +485,16 @@ function Grid() {
     showAlert("Randomly infected " + config.startingIllCount + " people.");
   };
 
+  this.exportCurrentState = function() {
+    var result = "cellId,susceptible,ill,recovered,population\n";
+    for (var i=0; i < cells.length; i++) {
+      result += i + "," + cells[i].susceptibleCount() + "," + (cells[i].incubatedCount() +
+        cells[i].infectiousCount()) + "," + cells[i].recoveredCount() + "," +
+        cells[i].populationCount() + "\n";
+    }
+    return result;
+  }
+
   this.init = function() {
     // constructor
     // constructor
@@ -622,10 +632,12 @@ function Plot() {
   }
 
   this.exportHistory = function() {
-    var result = "day,susceptible,ill,recovered\n";
+    var result = "day,susceptible,ill,recovered,population\n";
     for (var i=0; i < this.historySusceptible.length; i++) {
       result += (i + 1) + "," + this.historySusceptible[i][1] + "," +
-        this.historyIll[i][1] + "," + this.historyRecovered[i][1] + "\n";
+        this.historyIll[i][1] + "," + this.historyRecovered[i][1] + "," +
+        (this.historySusceptible[i][1] + this.historyIll[i][1] +
+         this.historyRecovered[i][1]) + "\n";
     }
     return result;
   };
@@ -862,8 +874,12 @@ function Epidemic(_config, _grid, _picture) {
     delete localStorage[id];
   }
 
-  this.exportData = function() {
+  this.exportHistoryData = function() {
     return plot.exportHistory();
+  };
+
+  this.exportCellsState = function() {
+    return grid.exportCurrentState();
   };
 
   // constructor
@@ -1032,17 +1048,30 @@ $(document).ready(function(){
     $("#illCount").attr("value", 0);
     $("#illSelectedCount").text(0);
   });
+
   function updateMenUnderMap() {
     $("#randomlyAddIll").text("Distribute randomly " + config.startingIllCount + " ill");
   };
   updateMenUnderMap();
+
   $("#randomlyAddIll").click(function(event) {
     grid.addRandomlyPlacedIll(config);
     epidemic.showStats();
   });
-  $("#exportPlotData").click(function(event) {
-    var blob = new Blob([epidemic.exportData()], {type: "text/plain;charset=utf-8"});
+
+  function saveAsOverallHistory() {
+    var blob = new Blob([epidemic.exportHistoryData()], {type: "text/plain;charset=utf-8"});
     saveAs(blob, "history.csv");
+  }
+
+  function saveAsCellsState() {
+    var blob = new Blob([epidemic.exportCellsState ()], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "cells_state.csv");
+  }
+
+  $("#exportPlotData").click(function(event) {
+    saveAsOverallHistory();
+    setTimeout(saveAsCellsState,500);
   });
 
   $("input:radio[name=providedEpidemics]").change(function(event) {
