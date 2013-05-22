@@ -1067,12 +1067,20 @@ $(document).ready(function(){
     showAlert("Settings for " + $(this).next().text() + " epidemic have been loaded.");
   });
 
+  $("#configuration input").change(function() {
+    $("#configuration submit").click();
+    configurationUpdated();
+  });
+
   $("#configuration").submit(function(event) {
     event.preventDefault();
+    configurationUpdated();
+  });
+  function configurationUpdated() {
     config.loadSettingsFromForm();
     $("input:radio[name=providedEpidemics]").prop('checked', false);
     updateMenUnderMap();
     showAlert("Settings have been saved.");
-  });
+  }
 });
 
