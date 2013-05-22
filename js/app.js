@@ -79,7 +79,6 @@ var recoveredIndex = 1 + incubatedDays + infectiousDays;
 var incubatedIndex = 1;
 var infectiousIndex = incubatedIndex + incubatedDays;
 var statesCountLength = 2 + incubatedDays + infectiousDays;
-var newIncubatedDefaultPercentage = 0.05;
 var commutingCityTreshold = 76000;
 var startingSick = 400;
 var startingSickPerCell = 16;
