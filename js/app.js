@@ -80,8 +80,6 @@ var incubatedIndex = 1;
 var infectiousIndex = incubatedIndex + incubatedDays;
 var statesCountLength = 2 + incubatedDays + infectiousDays;
 var commutingCityTreshold = 76000;
-var startingSick = 400;
-var startingSickPerCell = 16;
 var randomizedProbEnabled = true;
 
 //# Cell class
@@ -477,12 +475,14 @@ function Grid() {
     this.init();
   }
 
-  this.addRandomlyPlacedIll = function() {
-    for (var i = 0; i < startingSick; i+=startingSickPerCell ) {
-      cells[Math.floor(Math.random()*cells.length)].statesCount[1] += startingSickPerCell ;
+  this.addRandomlyPlacedIll = function(config) {
+    config.startingIllCount;
+    config.startingIllPerCell;
+    for (var i = 0; i < Math.floor(config.startingIllCount/config.startingIllPerCell); i++) {
+      cells[Math.floor(Math.random()*cells.length)].statesCount[1] += config.startingIllPerCell ;
     }
     this.updateOverallCount();
-    showAlert("Randomly infected " + startingSick + " people.");
+    showAlert("Randomly infected " + config.startingIllCount + " people.");
   };
 
   this.init = function() {
@@ -635,7 +635,8 @@ function Plot() {
 function Configuration() {
 
   var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
-    "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff"];
+    "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
+    "startingIllPerCell"];
     
 
   // Generate getters and setters
@@ -672,7 +673,7 @@ function Configuration() {
     var values;
     if (id == 1) {
       // influenza
-      values = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3];
+      values = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20];
     }
     //else if(id == 2) {
       //// smallpox
@@ -1031,9 +1032,12 @@ $(document).ready(function(){
     $("#illCount").attr("value", 0);
     $("#illSelectedCount").text(0);
   });
-  $("#randomlyAddIll").text("Distribute randomly " + startingSick + " ill");
+  function updateMenUnderMap() {
+    $("#randomlyAddIll").text("Distribute randomly " + config.startingIllCount + " ill");
+  };
+  updateMenUnderMap();
   $("#randomlyAddIll").click(function(event) {
-    grid.addRandomlyPlacedIll();
+    grid.addRandomlyPlacedIll(config);
     epidemic.showStats();
   });
   $("#exportPlotData").click(function(event) {
@@ -1051,6 +1055,7 @@ $(document).ready(function(){
     event.preventDefault();
     config.loadSettingsFromForm();
     $("input:radio[name=providedEpidemics]").prop('checked', false);
+    updateMenUnderMap();
     showAlert("Settings have been saved.");
   });
 });

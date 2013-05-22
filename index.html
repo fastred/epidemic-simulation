@@ -79,6 +79,8 @@
             <input required="required" type="number" id="birthRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
             <label>Natural death rate</label>
             <input required="required" type="number" id="naturalDeathRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Virus morbidity</label>
+            <input required="required" type="number" id="virusMorbidity" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
             <button type="submit" class="btn btn-primary">Save settings</button>
           </div>
           <div class="span3">
@@ -88,8 +90,10 @@
             <input required="required" type="number" id="illImmigrationRate" min="0" max="1" step="0.001" placeholder="Value between 0 and 1">
             <label>City commuting rate</label>
             <input required="required" type="number" id="bigCityRate" min="0" max="1" step="0.01" placeholder="Value between 0 and 1">
-            <label>Virus morbidity</label>
-            <input required="required" type="number" id="virusMorbidity" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <label>Random ill count</label>
+            <input required="required" type="number" id="startingIllCount" min="0"  step="1">
+            <label>Random ill per cell</label>
+            <input required="required" type="number" id="startingIllPerCell" min="1" step="1">
           </div>
         </div>
       </form>
