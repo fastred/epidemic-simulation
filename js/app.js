@@ -648,7 +648,12 @@ function Configuration() {
   var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
     "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
     "startingIllPerCell"];
-    
+
+  var epidemics = {};
+  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20];
+  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 400, 20];
+  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 400, 20];
+  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 400, 20];
 
   // Generate getters and setters
   for(id in params) {
@@ -668,22 +673,10 @@ function Configuration() {
   }
 
   // Loads predefined (provided by authors) settings for few diseases.
-  this.loadPredefinedSettings = function(id) {
-    var values;
-    if (id == 1) {
-      // influenza
-      values = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20];
-    }
-    //else if(id == 2) {
-      //// smallpox
-      //values = [0.01, 0.0001, 0.0001, 0.005, 0.3, 0.6, 0.1, 0.01];
-    //} else if(id == 3) {
-      //// zombie
-      //values = [0.2, 0.0001, 0.0001, 0.005, 0, 0.06, 0.01, 0];
-    //}
+  this.loadPredefinedSettings = function(epidemic_key) {
     for(var id in params) {
       var param = params[id];
-      this[param] = values[id];
+      this[param] = epidemics[epidemic_key][id];
     }
     this.pushSettingsToForm();
   }
@@ -715,7 +708,16 @@ function Configuration() {
   }
 
   // constructor
-  this.loadPredefinedSettings(1);
+  this.loadPredefinedSettings(Object.keys(epidemics)[0]);
+  var epidemicsHtml = "";
+  var first = true;
+  for (var key in epidemics) {
+    epidemicsHtml += '<label class="radio inline"><input type="radio" name="providedEpidemics" value="'+
+      key + '"' + (first ? 'checked' : '') + '><span>' + key + '</span></label>';
+    first = false;
+  }
+  $("#defaultEpidemics").html(epidemicsHtml);
+
 };
 
 // # Epidemic class
