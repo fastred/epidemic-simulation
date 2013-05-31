@@ -79,6 +79,21 @@ def export_to_json( arr )
   return result
 end
 
+def export_to_gnuplot( arr )
+  result = ""
+  x_size = arr[0].size
+  y_size = arr.size
+  (0...x_size).to_a.each do |x|
+    (0...y_size).to_a.each do |y|
+      population = arr[y_size- 1 - y][x]
+      population = 0 if population < 50
+      result += x.to_s + " " + y.to_s + " " + population.to_s + "\n"
+    end
+    result += "\n"
+  end
+  return result
+end
+
 
 puts "sum: " + sum_arr(output).to_s
 
@@ -87,3 +102,6 @@ puts output[0].size
 
 json = export_to_json(output)
 File.open("../js/polish_data.js", 'w') { |file| file.write(json) }
+
+File.open("polish_data.dat", 'w') { |file| file.write(export_to_gnuplot(output)) }
+
