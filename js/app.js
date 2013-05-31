@@ -471,11 +471,14 @@ function Grid() {
   };
 
   this.exportCurrentState = function() {
-    var result = "cellId,susceptible,ill,recovered,population\n";
-    for (var i=0; i < cells.length; i++) {
-      result += i + "," + cells[i].susceptibleCount() + "," + (cells[i].incubatedCount() +
-        cells[i].infectiousCount()) + "," + cells[i].recoveredCount() + "," +
-        cells[i].populationCount() + "\n";
+    var result = "";
+    for (var x=0; x < colsCount; x++) {
+      for (var y=0; y < rowsCount; y++) {
+        var cell = cells[(rowsCount - 1 - y)*rowsCount + x];
+        result += x + " " + y + " " + (cell.incubatedCount() +
+                                       cell.infectiousCount()) + "\n";
+      }
+      result += "\n";
     }
     return result;
   }
@@ -1041,7 +1044,7 @@ $(document).ready(function(){
 
   function saveAsCellsState() {
     var blob = new Blob([epidemic.exportCellsState ()], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, "cells_state_" + new Date().toLocaleString() + ".csv");
+    saveAs(blob, "cells_state_" + new Date().toLocaleString() + ".dat");
   }
 
   $("#exportPlotData").click(function(event) {
