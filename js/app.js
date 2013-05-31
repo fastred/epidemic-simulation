@@ -93,27 +93,14 @@ function Cell(_populationCount, _populationLimit) {
   this.statesCount[0] = _populationCount;
   this.populationLimit = _populationLimit;
 
-  // Simulates natural deaths with given probability.
-  this.simNaturalDeaths = function(prob) {
+  // Simulates births and deaths
+  this.simBirthsAndDeaths = function(birth, death, virusMorb) {
     for (var i = 0; i < statesCountLength; i++ ) {
-      var diedToday = Math.round(this.statesCount[i] * prob);
-      this.statesCount[i] -= diedToday;
-    }
-  }
-
-  // Simulates deaths caused by the virus (with given probability).
-  this.simVirusMorbidity= function(prob) {
-    for (var i = incubatedIndex; i < infectiousIndex + infectiousDays; i++ ) {
-      var diedToday = Math.round(this.statesCount[i] * prob);
-      this.statesCount[i] -= diedToday;
-    }
-  }
-
-  // Simulates new births with given probability.
-  this.simBirths = function(prob) {
-    for (var i = 0; i < statesCountLength; i++ ) {
-      var newborns = Math.round(this.statesCount[i] * prob);
-      this.statesCount[i] += newborns;
+      var delta = birth - death;
+      if (i >= incubatedIndex && i < infectiousIndex + infectiousDays) {
+        delta -= virusMorb;
+      }
+      this.statesCount[i] = Math.round(this.statesCount[i] * (1 + delta));
     }
   }
 
@@ -447,9 +434,8 @@ function Grid() {
     // Simulates natural deaths, deaths caused by the virus and new births.
     for(var i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
-      currCell.simNaturalDeaths(config.naturalDeathRate);
-      currCell.simVirusMorbidity(config.virusMorbidity);
-      currCell.simBirths(config.birthRate);
+      currCell.simBirthsAndDeaths(config.birthRate, config.naturalDeathRate,
+                                  config.virusMorbidity);
     }
     // Simulates infections and recoveries
     for(i = 0; i < cellsCount; i++) {
