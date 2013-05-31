@@ -464,7 +464,7 @@ function Grid() {
     for(var i = 0; i < cellsCount; i++) {
       cells[i].populationCount = loaded[i].populationCount;
       cells[i].infectiousCount = loaded[i].infectiousCount;
-      cells[i].populationLimit = 2*loaded[i].populationLimit;
+      cells[i].populationLimit = 2*loaded[i].populationCount;
     }
     this.updateOverallCount();
   }
