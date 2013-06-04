@@ -304,6 +304,7 @@ function Grid() {
   var infectiousOverallCount = 0;
   var recoveredOverallCount = 0;
   var susceptibleOverallCount = 0;
+  var closestCity;
 
   this.__defineGetter__("rowsCount", function(){
     return rowsCount;
