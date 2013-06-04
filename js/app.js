@@ -76,13 +76,17 @@ var config = new function() {
 
   var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
     "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
-    "startingIllPerCell"];
+    "startingIllPerCell", "incubatedDays", "infectiousDays"];
 
   var epidemics = {};
-  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20];
-  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 400, 20];
-  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 400, 20];
-  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 400, 20];
+  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20,
+    2, 4];
+  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 400, 20,
+    2, 4];
+  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 400, 20,
+    2, 4];
+  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 400, 20,
+    2, 4];
 
   // Generate getters and setters
   for(id in params) {
@@ -149,12 +153,6 @@ var config = new function() {
   }
 
   // static config
-  this.__defineGetter__("incubatedDays", function(){
-    return 2;
-  });
-  this.__defineGetter__("infectiousDays", function(){
-    return 4;
-  });
   this.__defineGetter__("recoveredIndex", function(){
     return 1 + this.incubatedDays + this.infectiousDays;
   });
@@ -544,11 +542,6 @@ function Grid() {
     this.updateOverallCount();
   }
 
-  this.resetCells = function() {
-    cells = new Array(cellsCount);
-    this.init();
-  }
-
   this.addRandomlyPlacedIll = function() {
     config.startingIllCount;
     config.startingIllPerCell;
@@ -574,8 +567,6 @@ function Grid() {
   }
 
   this.init = function() {
-    // constructor
-    // constructor
     this.nonEmptyCells = [];
     _.each(cellsPopulation, function(value, key) {
       cells[key] = new Cell(value, value * 2.5);
@@ -810,7 +801,7 @@ function Epidemic(_grid, _picture) {
   };
 
   this.restart = function() {
-    grid.resetCells();
+    grid.init();
     iterationNumber = 0;
     plot = new Plot();
     plot.refresh();
@@ -1084,5 +1075,13 @@ $(document).ready(function(){
     updateMenUnderMap();
     showAlert("Settings have been saved.");
   }
+
+  // restart after changing lenghts of infection
+  $("#incubatedDays").change(function() {
+    epidemic.restart();
+  });
+  $("#infectiousDays").change(function() {
+    epidemic.restart();
+  });
 });
 
