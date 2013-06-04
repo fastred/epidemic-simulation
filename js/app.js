@@ -71,8 +71,85 @@ function numberWithThousandsFormatted(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-// Global config
+// # Configuration class
+var config = new function() {
 
+  var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
+    "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
+    "startingIllPerCell"];
+
+  var epidemics = {};
+  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20];
+  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 400, 20];
+  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 400, 20];
+  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 400, 20];
+
+  // Generate getters and setters
+  for(id in params) {
+    var param = params[id];
+    this[param] = function() {
+      return this[param];
+    };
+    // Create a setter that checks whether 'val' is in the interval [0,1]
+    this[param] = function(val) {
+      if (val > 1) {
+        val = 1;
+      } else if (val < 0) {
+        val = 0;
+      }
+      this[param] = val;
+    };
+  }
+
+  // Loads predefined (provided by authors) settings for few diseases.
+  this.loadPredefinedSettings = function(epidemic_key) {
+    for(var id in params) {
+      var param = params[id];
+      this[param] = epidemics[epidemic_key][id];
+    }
+    this.pushSettingsToForm();
+  }
+
+  // Loads settings entered by the user in the form.
+  this.loadSettingsFromForm = function() {
+    for (var id in params) {
+      var param = params[id];
+      this[param] = parseFloat($("#" + param).val());
+    }
+  }
+
+  // Loads settings from the previously saved state.
+  this.loadSavedSettings = function(loaded) {
+    for (var id in params) {
+      var param = params[id];
+      this[param] = loaded[param];
+    }
+    this.pushSettingsToForm();
+  }
+
+  // Updates user-facing form with new values. It's used e.g. after loading one
+  // of the default diseases.
+  this.pushSettingsToForm = function() {
+    for (var id in params) {
+      var param = params[id];
+      $("#" + param).val(this[param]);
+    }
+  }
+
+  this.loadDefaultEpidemic = function() {
+    this.loadPredefinedSettings(Object.keys(epidemics)[0]);
+    var epidemicsHtml = "";
+    var first = true;
+    for (var key in epidemics) {
+      epidemicsHtml += '<label class="radio inline"><input type="radio" name="providedEpidemics" value="'+
+        key + '"' + (first ? 'checked' : '') + '><span>' + key + '</span></label>';
+      first = false;
+    }
+    $("#defaultEpidemics").html(epidemicsHtml);
+  }
+};
+
+// Global config
 var incubatedDays = 2;
 var infectiousDays = 4;
 var recoveredIndex = 1 + incubatedDays + infectiousDays;
@@ -105,7 +182,7 @@ function Cell(_populationCount, _populationLimit) {
   }
 
   // Simulates new infections (with given probability).
-  this.simInfections = function(index, config, immigrants) {
+  this.simInfections = function(index, immigrants) {
     if (this.populationCount() > 0) {
       var prob = config.contactInfectionRate;
       var immigrantsSusceptible = 0;
@@ -345,7 +422,7 @@ function Grid() {
   // 4. Use additional datastructures to keep track of counts of people moving from
   // one cell to another. It's mandatory, because in simReturningImmigrations people
   // come back home.
-  this.simImmigrations = function(config) {
+  this.simImmigrations = function() {
     for(var i = 0; i < cells.length; i++) {
       var currCell = cells[i];
       if (currCell.populationLimit > 0) {
@@ -410,7 +487,7 @@ function Grid() {
     }
   };
 
-  this.simReturningImmigrations = function(config) {
+  this.simReturningImmigrations = function() {
     for(var i = 0; i < cells.length; i++) {
       var currCell = cells[i];
       if (currCell.populationLimit > 0) {
@@ -429,8 +506,8 @@ function Grid() {
   };
 
   // Performs next step in the simulation.
-  this.next = function(config) {
-    this.simImmigrations(config);
+  this.next = function() {
+    this.simImmigrations();
     // Simulates natural deaths, deaths caused by the virus and new births.
     for(var i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
@@ -440,9 +517,9 @@ function Grid() {
     // Simulates infections and recoveries
     for(i = 0; i < cellsCount; i++) {
       var currCell = cells[i];
-      currCell.simInfections(i, config, this.immigrants[i]);
+      currCell.simInfections(i, this.immigrants[i]);
     }
-    this.simReturningImmigrations(config);
+    this.simReturningImmigrations();
     this.updateOverallCount();
   }
 
@@ -460,7 +537,7 @@ function Grid() {
     this.init();
   }
 
-  this.addRandomlyPlacedIll = function(config) {
+  this.addRandomlyPlacedIll = function() {
     config.startingIllCount;
     config.startingIllPerCell;
     for (var i = 0; i < Math.floor(config.startingIllCount/config.startingIllPerCell); i++) {
@@ -631,86 +708,8 @@ function Plot() {
   };
 }
 
-// # Configuration class
-function Configuration() {
-
-  var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
-    "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
-    "startingIllPerCell"];
-
-  var epidemics = {};
-  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20];
-  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 400, 20];
-  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 400, 20];
-  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 400, 20];
-
-  // Generate getters and setters
-  for(id in params) {
-    var param = params[id];
-    this[param] = function() {
-      return this[param];
-    };
-    // Create a setter that checks whether 'val' is in the interval [0,1]
-    this[param] = function(val) {
-      if (val > 1) {
-        val = 1;
-      } else if (val < 0) {
-        val = 0;
-      }
-      this[param] = val;
-    };
-  }
-
-  // Loads predefined (provided by authors) settings for few diseases.
-  this.loadPredefinedSettings = function(epidemic_key) {
-    for(var id in params) {
-      var param = params[id];
-      this[param] = epidemics[epidemic_key][id];
-    }
-    this.pushSettingsToForm();
-  }
-
-  // Loads settings entered by the user in the form.
-  this.loadSettingsFromForm = function() {
-    for (var id in params) {
-      var param = params[id];
-      this[param] = parseFloat($("#" + param).val());
-    }
-  }
-
-  // Loads settings from the previously saved state.
-  this.loadSavedSettings = function(loaded) {
-    for (var id in params) {
-      var param = params[id];
-      this[param] = loaded[param];
-    }
-    this.pushSettingsToForm();
-  }
-
-  // Updates user-facing form with new values. It's used e.g. after loading one
-  // of the default diseases.
-  this.pushSettingsToForm = function() {
-    for (var id in params) {
-      var param = params[id];
-      $("#" + param).val(this[param]);
-    }
-  }
-
-  // constructor
-  this.loadPredefinedSettings(Object.keys(epidemics)[0]);
-  var epidemicsHtml = "";
-  var first = true;
-  for (var key in epidemics) {
-    epidemicsHtml += '<label class="radio inline"><input type="radio" name="providedEpidemics" value="'+
-      key + '"' + (first ? 'checked' : '') + '><span>' + key + '</span></label>';
-    first = false;
-  }
-  $("#defaultEpidemics").html(epidemicsHtml);
-
-};
-
 // # Epidemic class
-function Epidemic(_config, _grid, _picture) {
+function Epidemic(_grid, _picture) {
 
   this.lastMouseOveredCell;
   this.lastMouseOveredIndex;
@@ -740,7 +739,7 @@ function Epidemic(_config, _grid, _picture) {
 
   // Generates next step of the simulation.
   this.nextStep = function() {
-    grid.next(config);
+    grid.next();
     picture.updateWithNewData(grid.cells);
     plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
                            grid.infectiousOverallCount, grid.recoveredOverallCount);
@@ -861,7 +860,6 @@ function Epidemic(_config, _grid, _picture) {
   };
 
   // constructor
-  var config = _config;
   var grid = _grid;
   var picture = _picture;
   var iterationNumber = 0;
@@ -872,11 +870,11 @@ function Epidemic(_config, _grid, _picture) {
 
 
 $(document).ready(function(){
-  var config = new Configuration();
+  config.loadDefaultEpidemic();
   grid = new Grid();
   var picture = new Picture(grid.colsCount, grid.rowsCount);
 
-  var epidemic = new Epidemic(config, grid, picture);
+  var epidemic = new Epidemic(grid, picture);
   epidemic.showStats();
 
   // # Events.
@@ -1033,7 +1031,7 @@ $(document).ready(function(){
   updateMenUnderMap();
 
   $("#randomlyAddIll").click(function(event) {
-    grid.addRandomlyPlacedIll(config);
+    grid.addRandomlyPlacedIll();
     epidemic.showStats();
   });
 
