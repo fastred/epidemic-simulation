@@ -1039,12 +1039,12 @@ $(document).ready(function(){
 
   function saveAsOverallHistory() {
     var blob = new Blob([epidemic.exportHistoryData()], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, "history_" + new Date().toLocaleString() + ".csv");
+    saveAs(blob, "epidemic_history_" + new Date().toGMTString() + ".csv");
   }
 
   function saveAsCellsState() {
     var blob = new Blob([epidemic.exportCellsState ()], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, "cells_state_" + new Date().toLocaleString() + ".dat");
+    saveAs(blob, "epidemic_cells_state_" + new Date().toGMTString() + ".dat");
   }
 
   $("#exportPlotData").click(function(event) {
