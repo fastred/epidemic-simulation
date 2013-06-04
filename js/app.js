@@ -147,17 +147,30 @@ var config = new function() {
     }
     $("#defaultEpidemics").html(epidemicsHtml);
   }
-};
 
-// Global config
-var incubatedDays = 2;
-var infectiousDays = 4;
-var recoveredIndex = 1 + incubatedDays + infectiousDays;
-var incubatedIndex = 1;
-var infectiousIndex = incubatedIndex + incubatedDays;
-var statesCountLength = 2 + incubatedDays + infectiousDays;
-var commutingCityTreshold = 80000;
-var randomizedProbEnabled = true;
+  // static config
+  this.__defineGetter__("incubatedDays", function(){
+    return 2;
+  });
+  this.__defineGetter__("infectiousDays", function(){
+    return 4;
+  });
+  this.__defineGetter__("recoveredIndex", function(){
+    return 1 + this.incubatedDays + this.infectiousDays;
+  });
+  this.__defineGetter__("incubatedIndex", function(){
+    return 1;
+  });
+  this.__defineGetter__("infectiousIndex", function(){
+    return this.incubatedIndex + this.incubatedDays;
+  });
+  this.__defineGetter__("statesCountLength", function(){
+    return 2 + this.incubatedDays + this.infectiousDays;
+  });
+  this.__defineGetter__("commutingCityTreshold", function(){
+    return 80000;
+  });
+};
 
 //# Cell class
 // This class represents one cell in the grid.
@@ -166,15 +179,15 @@ function Cell(_populationCount, _populationLimit) {
   // [1..2] is incubated
   // [3..6] is infectious
   // [7] is recovered
-  this.statesCount = makeArrayOf(0, statesCountLength);
+  this.statesCount = makeArrayOf(0, config.statesCountLength);
   this.statesCount[0] = _populationCount;
   this.populationLimit = _populationLimit;
 
   // Simulates births and deaths
   this.simBirthsAndDeaths = function(birth, death, virusMorb) {
-    for (var i = 0; i < statesCountLength; i++ ) {
+    for (var i = 0; i < config.statesCountLength; i++ ) {
       var delta = birth - death;
-      if (i >= incubatedIndex && i < infectiousIndex + infectiousDays) {
+      if (i >= config.incubatedIndex && i < config.infectiousIndex + config.infectiousDays) {
         delta -= virusMorb;
       }
       this.statesCount[i] = Math.round(this.statesCount[i] * (1 + delta));
@@ -200,15 +213,14 @@ function Cell(_populationCount, _populationLimit) {
       immigrantsPopulation += immigrantsSusceptible + immigrantsIncubated +
         immigrantsInfectious + immigrantsRecovered;
       // probability of infection, uses local and immigrant population data
-      var infectionProb = 1 - Math.exp(-prob * (this.infectiousCount() + immigrantsInfectious) /
+      var prob_q = 1 - Math.exp(-prob * (this.infectiousCount() + immigrantsInfectious) /
         (this.populationCount() + immigrantsPopulation));
 
       // move people between states in the backward order
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
         if (i === 0) {
           // randomization
-          infectionProb = randomizedProbEnabled ?
-            randomizeProbWithNormalDistribution(infectionProb, config.varCoeff) : infectionProb;
+          var infectionProb = randomizeProbWithNormalDistribution(prob_q, config.varCoeff);
           var infectiousTodayInCell = Math.floor(this.susceptibleCount() * infectionProb);
           this.statesCount[i + 1] += infectiousTodayInCell;
           this.statesCount[i] -= infectiousTodayInCell;
@@ -250,18 +262,18 @@ function Cell(_populationCount, _populationLimit) {
   };
 
   this.recoveredCount = function() {
-    return this.statesCount[recoveredIndex];
+    return this.statesCount[config.recoveredIndex];
   };
 
   this.incubatedCount = function() {
-    return _.reduce(this.statesCount.slice(incubatedIndex, incubatedIndex + incubatedDays),
+    return _.reduce(this.statesCount.slice(config.incubatedIndex, config.incubatedIndex + config.incubatedDays),
                     function(memo, num) {
                       return memo + num;
                     }, 0);
   };
 
   this.infectiousCount = function() {
-    return _.reduce(this.statesCount.slice(infectiousIndex, infectiousIndex + infectiousDays),
+    return _.reduce(this.statesCount.slice(config.infectiousIndex, config.infectiousIndex + config.infectiousDays),
                     function(memo, num) {
                       return memo + num;
                     }, 0);
@@ -391,7 +403,7 @@ function Grid() {
           var obj = queue.shift();
           var index = obj.ind;
           var distance = obj.dist;
-          if (cells[index].populationCount() > commutingCityTreshold && index != i) {
+          if (cells[index].populationCount() > config.commutingCityTreshold && index != i) {
             cityFound = true;
             //resultJsonText += i + ": {ind: " + index + ", dist: " + distance + "},\n";
             closestCity[i] = {ind: index, dist: distance};
@@ -429,7 +441,7 @@ function Grid() {
         var neighbours = this.getNeighbours(i);
         var closeCityObj = closestCity[i];
         var closeCityExists = false;
-        if (currCell.populationCount() <= commutingCityTreshold && closeCityObj &&
+        if (currCell.populationCount() <= config.commutingCityTreshold && closeCityObj &&
             closeCityObj.dist >= 1 && closeCityObj.dist <= 3) {
           // if dist == 1 then city is already in neighbours
           if (closeCityObj.dist > 1) {
@@ -447,8 +459,8 @@ function Grid() {
             if (!this.immigrants[neighbours[j]][i]) {
               this.immigrants[neighbours[j]][i] = new Cell(null, null);
             }
-            for (var k = 0; k < statesCountLength; k++ ) {
-              var immigrationRate = k > 0 && k < statesCountLength - 1 ? config.illImmigrationRate :
+            for (var k = 0; k < config.statesCountLength; k++ ) {
+              var immigrationRate = k > 0 && k < config.statesCountLength - 1 ? config.illImmigrationRate :
                 config.immigrationRate;
               var toMove = Math.round(currCell.statesCount[k] * immigrationRate);
               if (closeCityExists) {
@@ -494,7 +506,7 @@ function Grid() {
         for(var key in this.immigrants[i]) {
           var neighCell = cells[key];
           if (neighCell.populationLimit > 0) {
-            for (var k = 0; k < statesCountLength; k++ ) {
+            for (var k = 0; k < config.statesCountLength; k++ ) {
               // move people back from immigration to their origin cell
               neighCell.statesCount[k] += this.immigrants[i][key].statesCount[k];
               this.immigrants[i][key].statesCount[k] = 0;
