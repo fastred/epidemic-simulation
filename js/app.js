@@ -96,11 +96,6 @@ var config = new function() {
     };
     // Create a setter that checks whether 'val' is in the interval [0,1]
     this[param] = function(val) {
-      if (val > 1) {
-        val = 1;
-      } else if (val < 0) {
-        val = 0;
-      }
       this[param] = val;
     };
   }
