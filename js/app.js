@@ -117,15 +117,6 @@ var config = new function() {
     }
   }
 
-  // Loads settings from the previously saved state.
-  this.loadSavedSettings = function(loaded) {
-    for (var id in params) {
-      var param = params[id];
-      this[param] = loaded[param];
-    }
-    this.pushSettingsToForm();
-  }
-
   // Updates user-facing form with new values. It's used e.g. after loading one
   // of the default diseases.
   this.pushSettingsToForm = function() {
@@ -535,15 +526,6 @@ function Grid() {
     this.updateOverallCount();
   }
 
-  this.loadState = function(loaded) {
-    for(var i = 0; i < cellsCount; i++) {
-      cells[i].populationCount = loaded[i].populationCount;
-      cells[i].infectiousCount = loaded[i].infectiousCount;
-      cells[i].populationLimit = 2*loaded[i].populationCount;
-    }
-    this.updateOverallCount();
-  }
-
   this.addRandomlyPlacedIll = function() {
     config.startingIllCount;
     config.startingIllPerCell;
@@ -651,21 +633,6 @@ function Picture(_cols, _rows) {
   // Returns the info about the cell from the given onclick event.
   this.getClickedCellPosition = function(event) {
     return this.getCellPosition(event.pageX, event.pageY);
-  }
-
-  // Exports the map picture as a data URI scheme, read more at:
-  // http://tools.ietf.org/html/rfc2397
-  this.exportImage = function() {
-    // Create offscreen buffer.
-    buffer = document.createElement('canvas');
-    buffer.width = canvasWidth;
-    buffer.height = canvasHeight;
-    bx = buffer.getContext('2d');
-    bx.drawImage(document.getElementById('poland_map'), 0, 0);
-    bx.drawImage(canvas, 0, 0);
-
-    var data = buffer.toDataURL("image/png");
-    window.open(data);
   }
 }
 
@@ -811,52 +778,6 @@ function Epidemic(_grid, _picture) {
     this.showStats();
   }
 
-  // Saves current state in the user browsers' localStorage.
-  this.save = function() {
-    var id = (new Date()).toGMTString();
-    var state = {}
-    state["cells"] = grid.cells;
-    state["iterationNumber"] = iterationNumber;
-    state["historyOverall"] = plot.historyOverall;
-    state["historyInfectious"] = plot.historyInfectious;
-    state["config"] = config;
-    try {
-      localStorage[id] = JSON.stringify(state);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  this.savedStatesList = function() {
-    var list = [];
-    for (var prop in localStorage) {
-      list.push(prop);
-    }
-    return list;
-  }
-
-  this.load = function(id) {
-    try {
-      var state = JSON.parse(localStorage[id]);
-      grid.loadState(state.cells);
-      iterationNumber = state.iterationNumber;
-      plot.historyOverall = state["historyOverall"];
-      plot.historyInfectious = state["historyInfectious"];
-      config.loadSavedSettings(state["config"]);
-      plot.refresh();
-      this.init();
-      this.showStats();
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  this.deleteSavedState = function(id) {
-    delete localStorage[id];
-  }
-
   this.exportHistoryData = function() {
     return plot.exportHistory();
   };
@@ -888,9 +809,6 @@ $(document).ready(function(){
   var startButton = $("#start");
   var pauseButton = $("#pause");
   var oneStepButton = $("#oneStep");
-  var exportImageButton = $("#exportImage");
-  var saveStateButton = $("#saveState");
-  var loadStateButton = $("#loadState");
   var restartButton = $("#restart");
   startButton.click(function(event) {
     event.preventDefault();
@@ -938,65 +856,6 @@ $(document).ready(function(){
       case 114: restartButton.click();
       break;
     }
-  });
-
-
-  // ## Import and export buttons' events.
-  exportImageButton.click(function(event) {
-    event.preventDefault();
-    picture.exportImage();
-  });
-  // Saves state.
-  saveStateButton.click(function(event) {
-    event.preventDefault();
-    if (!supports_html5_storage()) {
-      showAlert("Your browser doesn't support local storage.");
-      return false;
-    }
-    if (epidemic.save()) {
-      showAlert("State has been saved.");
-    } else {
-      showAlert("Storage limit excedeed. Please delete old states.");
-    }
-  });
-  // Show modal window for selecting saved state.
-  loadStateButton.click(function(event) {
-    event.preventDefault();
-    if (!supports_html5_storage()) {
-      showAlert("Your browser doesn't support local storage.");
-      return false;
-    }
-    var list = epidemic.savedStatesList();
-    var output = $("#loadStateList");
-    if (list.length == 0) {
-      output.html("<li>You don't have any saved models!</li>");
-    } else {
-      output.html("");
-      for (var id in list) {
-        output.append('<li><a href="#" class="loadStateLink">' + list[id] + '</a>' +
-                    '<a class="btn btn-mini btn-danger stateDelete" href="#">' +
-                    'delete</a></li>');
-      }
-    }
-  });
-  // Loads state selected from the list.
-  $(".loadStateLink").live("click", function(event) {
-    event.preventDefault();
-    $('#savesList').modal('hide');
-    var id = $(this).text();
-    if (epidemic.load(id)) {
-      showAlert("State " + id + " has been loaded.");
-    } else {
-      showAlert("There was an error while loading your state!");
-    }
-  });
-
-  // Deletes saved state.
-  $(".stateDelete").live("click", function(event) {
-    event.preventDefault();
-    var id = $(this).prev().text();
-    epidemic.deleteSavedState(id);
-    $(this).parent().remove();
   });
 
   $("#picture").click(function(event) {
