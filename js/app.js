@@ -76,17 +76,17 @@ var config = new function() {
 
   var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
     "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
-    "startingIllPerCell", "incubatedDays", "infectiousDays"];
+    "startingIllPerCell", "incubatedDays", "infectiousDays", "infectionFunction"];
 
   var epidemics = {};
-  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 400, 20,
-    2, 4];
-  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 400, 20,
-    2, 4];
-  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 400, 20,
-    2, 4];
-  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 400, 20,
-    2, 4];
+  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 300, 20,
+    2, 4, 0];
+  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 300, 20,
+    2, 4, 0];
+  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 300, 20,
+    2, 4, 0];
+  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 300, 20,
+    2, 4, 0];
 
   // Generate getters and setters
   for(id in params) {
@@ -206,8 +206,14 @@ function Cell(_populationCount, _populationLimit) {
       immigrantsPopulation += immigrantsSusceptible + immigrantsIncubated +
         immigrantsInfectious + immigrantsRecovered;
       // probability of infection, uses local and immigrant population data
-      var prob_q = 1 - Math.exp(-prob * (this.infectiousCount() + immigrantsInfectious) /
-        (this.populationCount() + immigrantsPopulation));
+      var prob_q;
+      var infectivePercentage = (this.infectiousCount() + immigrantsInfectious) /
+                                  (this.populationCount() + immigrantsPopulation);
+      if(config.infectionFunction == 0) {
+        prob_q = 1 - Math.exp(-prob * infectivePercentage);
+      } else if (config.infectionFunction == 1) {
+        prob_q = prob * infectivePercentage;
+      }
 
       // move people between states in the backward order
       for (var i = this.statesCount.length - 2; i >= 0; i--) {
@@ -1056,7 +1062,7 @@ $(document).ready(function(){
     showAlert("Settings for " + $(this).next().text() + " epidemic have been loaded.");
   });
 
-  $("#configuration input").change(function() {
+  $("#configuration input, #configuration select").change(function() {
     $("#configuration submit").click();
     configurationUpdated();
   });
