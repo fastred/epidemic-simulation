@@ -61,34 +61,35 @@
       <form id="configuration" method="post">
         <div class="row">
           <div class="span3">
-            <label>Infection rate</label>
+            <label>Contact rate (<i>&beta;</i>)</label>
             <input required="required" type="number" id="contactInfectionRate" min="0" max="1" step="0.01" placeholder="Value between 0 and 100">
-            <label>Variation coefficient of infec. rate</label>
+            <label>Variation coeff. of contact rate (<i>v</i>)</label>
             <input required="required" type="number" id="varCoeff" min="0" max="1" step="0.001" placeholder="Value between 0 and 1">
-            <label>Birth rate</label>
+            <label>Birth rate (<i>&mu;<sub>b</sub></i>)</label>
             <input required="required" type="number" id="birthRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
-            <label>Natural death rate</label>
+            <label>Natural death rate (<i>&mu;<sub>d</sub></i>)</label>
             <input required="required" type="number" id="naturalDeathRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
-            <label>Virus morbidity</label>
+            <label>Virus morbidity (<i>&mu;<sub>vm</sub></i>)</label>
             <input required="required" type="number" id="virusMorbidity" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
-            <label>Exposed stage length</label>
-            <input required="required" type="number" id="incubatedDays" min="1" max="100" step="1" placeholder="Value between 0 and 1">
-            <label>Infective stage length</label>
-            <input required="required" type="number" id="infectiousDays" min="1" max="100" step="1" placeholder="Value between 0 and 1">
+            <label>Random ill count</label>
+            <input required="required" type="number" id="startingIllCount" min="0"  step="1">
             <button type="submit" class="btn btn-primary">Save settings</button>
           </div>
           <div class="span3">
-            <label>Commuting rate</label>
+            <label>Commuting rate (<i>&phi;<sub>h</sub></i>)</label>
             <input required="required" type="number" id="immigrationRate" min="0" max="1" step="0.001" placeholder="Value between 0 and 1">
-            <label>Ill commuting rate</label>
+            <label>Ill commuting rate (<i>&phi;<sub>s</sub></i>)</label>
             <input required="required" type="number" id="illImmigrationRate" min="0" max="1" step="0.001" placeholder="Value between 0 and 1">
-            <label>City commuting rate</label>
+            <label>City commuting rate (<i>&phi;<sub>c</sub></i>)</label>
             <input required="required" type="number" id="bigCityRate" min="0" max="1" step="0.01" placeholder="Value between 0 and 1">
-            <label>Random ill count</label>
-            <input required="required" type="number" id="startingIllCount" min="0"  step="1">
+            <label>Exposed stage length (<i>a</i>)*</label>
+            <input required="required" type="number" id="incubatedDays" min="1" max="100" step="1" placeholder="Value between 0 and 1">
+            <label>Infective stage length (<i>b</i>)*</label>
+            <input required="required" type="number" id="infectiousDays" min="1" max="100" step="1" placeholder="Value between 0 and 1">
             <label>Random ill per cell</label>
             <input required="required" type="number" id="startingIllPerCell" min="1" step="1">
           </div>
+          *change will restart simulation
         </div>
       </form>
     </div>
