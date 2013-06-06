@@ -712,6 +712,7 @@ function Epidemic(_grid, _picture) {
 
   // Generates next step of the simulation.
   this.nextStep = function() {
+    var oldInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
     grid.next();
     picture.updateWithNewData(grid.cells);
     plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
@@ -719,6 +720,12 @@ function Epidemic(_grid, _picture) {
     this.iterationNumber++;
     this.showStats();
     this.updateCellInfo(null, null);
+    var newInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
+    if (oldInfectedCount > 0 && newInfectedCount == 0) {
+      this.pause();
+      $("#pause").click(); // because of the lack of MVC
+      showAlert("Simulation has been automatically paused because epidemic spread finished");
+    }
   }
 
   this.pause = function() {
