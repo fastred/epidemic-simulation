@@ -49,6 +49,17 @@
         <div>New infections: <span id="illSelectedCount">0</span></div>
         <button id="illSubmit" type="submit" class="btn btn-primary">Submit</button>
       </div>
+      <div class="row">
+        <div class="span4 offset1">
+          <table class="table table-striped" id="iterationInfo">
+            <tr><td>Day:</td><td class="text-right">0</td></tr>
+            <tr><td>Populaton:</td><td></td></tr>
+            <tr><td>Incubated:</td><td></td></tr>
+            <tr><td>Infectious:</td><td></td></tr>
+            <tr><td>Recovered:</td><td></td></tr>
+          </table>
+        </div>
+      </div>
     </div>
     <div class="span6">
       You can select one of the provided epidemics:
@@ -98,16 +109,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="span3">
-      <table class="table table-striped" id="iterationInfo">
-        <tr><td>Day:</td><td class="text-right">0</td></tr>
-        <tr><td>Populaton:</td><td></td></tr>
-        <tr><td>Incubated:</td><td></td></tr>
-        <tr><td>Infectious:</td><td></td></tr>
-        <tr><td>Recovered:</td><td></td></tr>
-      </table>
-    </div>
-    <div id="plot" class="span9"></div>
+    <div id="plot" class="span9 offset1"></div>
   </div>
   <p>
   Map of Poland source: http://www.diva-gis.org/
