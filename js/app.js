@@ -670,12 +670,12 @@ function Plot() {
   }
 
   this.exportHistory = function() {
-    var result = "day,susceptible,ill,recovered,population\n";
+    var result = "# day susceptible infected recovered population\n";
     for (var i=0; i < this.historySusceptible.length; i++) {
-      result += (i + 1) + "," + this.historySusceptible[i][1] + "," +
-        this.historyIll[i][1] + "," + this.historyRecovered[i][1] + "," +
-        (this.historySusceptible[i][1] + this.historyIll[i][1] +
-         this.historyRecovered[i][1]) + "\n";
+      var line = [(i + 1), this.historySusceptible[i][1], this.historyIll[i][1],
+        this.historyRecovered[i][1], (this.historySusceptible[i][1] + this.historyIll[i][1] +
+                                      this.historyRecovered[i][1])];
+      result += line.join(" ") + "\n";
     }
     return result;
   };
@@ -703,7 +703,7 @@ function Epidemic(_grid, _picture) {
     var inc = grid.incubatedOverallCount;
     var inf = grid.infectiousOverallCount;
     var rec = grid.recoveredOverallCount;
-    $("#iterationInfo tr:eq(0) td:eq(1)").html(iterationNumber);
+    $("#iterationInfo tr:eq(0) td:eq(1)").html(this.iterationNumber);
     $("#iterationInfo tr:eq(1) td:eq(1)").html(numberWithThousandsFormatted(pop));
     $("#iterationInfo tr:eq(2) td:eq(1)").html(numberWithThousandsFormatted(inc));
     $("#iterationInfo tr:eq(3) td:eq(1)").html(numberWithThousandsFormatted(inf));
@@ -716,7 +716,7 @@ function Epidemic(_grid, _picture) {
     picture.updateWithNewData(grid.cells);
     plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
                            grid.infectiousOverallCount, grid.recoveredOverallCount);
-    iterationNumber++;
+    this.iterationNumber++;
     this.showStats();
     this.updateCellInfo(null, null);
   }
@@ -771,7 +771,7 @@ function Epidemic(_grid, _picture) {
 
   this.restart = function() {
     grid.init();
-    iterationNumber = 0;
+    this.iterationNumber = 0;
     plot = new Plot();
     plot.refresh();
     this.init();
@@ -789,7 +789,7 @@ function Epidemic(_grid, _picture) {
   // constructor
   var grid = _grid;
   var picture = _picture;
-  var iterationNumber = 0;
+  this.iterationNumber = 0;
   var running = false;
   var plot = new Plot();
   this.init();
@@ -902,17 +902,24 @@ $(document).ready(function(){
 
   function saveAsOverallHistory() {
     var blob = new Blob([epidemic.exportHistoryData()], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, "epidemic_history_" + new Date().toGMTString() + ".csv");
+    var fileName = "epi_cells_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
+      "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount;
+    saveAs(blob, fileName + ".dat");
   }
 
   function saveAsCellsState() {
     var blob = new Blob([epidemic.exportCellsState ()], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, "epidemic_cells_state_" + new Date().toGMTString() + ".dat");
+    var fileName = "epi_cells_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
+      "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount + "_t=" +
+      epidemic.iterationNumber;
+    saveAs(blob, fileName + ".dat");
   }
 
   $("#exportPlotData").click(function(event) {
     saveAsOverallHistory();
-    setTimeout(saveAsCellsState,500);
+  });
+  $("#exportCellsData").click(function(event) {
+    saveAsCellsState();
   });
 
   $("input:radio[name=providedEpidemics]").change(function(event) {
