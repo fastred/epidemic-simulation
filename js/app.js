@@ -26,14 +26,6 @@ function supports_html5_storage() {
   }
 }
 
-function showAlert(msg) {
-  $("#alertText").html(msg);
-  $(".alert").show();
-  setTimeout(function () {
-    $(".alert").hide();
-  }, 2000);
-}
-
 function randomizeProbWithNormalDistribution(mu, varCoeff) {
   var stddev = mu*varCoeff;
   var prob = normal_random(mu, stddev*stddev);
@@ -534,7 +526,6 @@ function Grid() {
       cells[cellId].statesCount[1] += config.startingIllPerCell ;
     }
     this.updateOverallCount();
-    showAlert("Randomly infected " + config.startingIllCount + " people.");
   };
 
   this.exportCurrentState = function() {
@@ -584,9 +575,9 @@ function Grid() {
   this.init();
 }
 
-// # Picture class
+// # PictureView class
 // Shows map of Poland, gather mouse clicks.
-function Picture(_cols, _rows) {
+function PictureView(_cols, _rows) {
   var colsCount = _cols;
   var rowsCount = _rows;
   var cellsCount = colsCount * rowsCount;
@@ -598,7 +589,7 @@ function Picture(_cols, _rows) {
   var sizeY = canvas.height/rowsCount;
 
   // Returns info about the cell that is under the provided position on the page.
-  this.getCellPosition = function(pageX, pageY) {
+  this.getCellInfoByPosition = function(pageX, pageY) {
     var x = (pageX - canvas.offsetLeft);
     var y = (pageY - canvas.offsetTop);
     var col = Math.floor(x/sizeX);
@@ -629,15 +620,10 @@ function Picture(_cols, _rows) {
       }
     }
   }
-
-  // Returns the info about the cell from the given onclick event.
-  this.getClickedCellPosition = function(event) {
-    return this.getCellPosition(event.pageX, event.pageY);
-  }
 }
 
-// # Plot class
-function Plot() {
+// # PlotView class
+function PlotView() {
   var options = {
     series: { shadowSize: 0 }, // drawing is faster without shadows
     xaxis: { show: true }
@@ -686,28 +672,18 @@ function Epidemic(_grid, _picture) {
 
   this.lastMouseOveredCell;
   this.lastMouseOveredIndex;
-  this.cellGettingNewInfections;
+  this.automaticallyPaused = new Event(this);
+  this.dataChanged = new Event(this);
 
   this.init = function() {
     picture.updateWithNewData(grid.cells);
   }
   this.run = function() {
-    running = true
-    var that = this;
-    this.interval = setInterval(function() { that.nextStep()}, 50 );
-  }
-
-  // Show current stats (day, population, infectious) under the map.
-  this.showStats = function() {
-    var pop = grid.populationOverallCount;
-    var inc = grid.incubatedOverallCount;
-    var inf = grid.infectiousOverallCount;
-    var rec = grid.recoveredOverallCount;
-    $("#iterationInfo tr:eq(0) td:eq(1)").html(this.iterationNumber);
-    $("#iterationInfo tr:eq(1) td:eq(1)").html(numberWithThousandsFormatted(pop));
-    $("#iterationInfo tr:eq(2) td:eq(1)").html(numberWithThousandsFormatted(inc));
-    $("#iterationInfo tr:eq(3) td:eq(1)").html(numberWithThousandsFormatted(inf));
-    $("#iterationInfo tr:eq(4) td:eq(1)").html(numberWithThousandsFormatted(rec));
+    if (!running) {
+      running = true
+      var that = this;
+      this.interval = setInterval(function() { that.nextStep()}, 50 );
+    }
   }
 
   // Generates next step of the simulation.
@@ -718,71 +694,40 @@ function Epidemic(_grid, _picture) {
     plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
                            grid.infectiousOverallCount, grid.recoveredOverallCount);
     this.iterationNumber++;
-    this.showStats();
-    this.updateCellInfo(null, null);
     var newInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
     if (oldInfectedCount > 0 && newInfectedCount == 0) {
       this.pause();
-      $("#pause").click(); // because of the lack of MVC
-      showAlert("Simulation has been automatically paused because epidemic spread finished");
+      this.automaticallyPaused.notify();
     }
+    this.dataChanged.notify();
   }
 
   this.pause = function() {
-    running = false;
-    clearInterval(this.interval);
-  }
-
-  this.infectiousUpdate = function(value) {
-    this.cellGettingNewInfections.addNewIncubated(value);
-    picture.updateWithNewData(grid.cells);
-    this.showStats();
-  }
-
-  this.showCellInfo = function(event) {
-    var pos = picture.getClickedCellPosition(event);
-    var cell = grid.cells[pos.index];
-    this.lastMouseOveredCell = cell;
-    this.lastMouseOveredIndex = pos.index;
-    this.updateCellInfo(event.pageX, event.pageY + 15);
-  };
-
-  this.getClickedCellInfo = function(event) {
-    var pos = picture.getClickedCellPosition(event);
-    var cell = grid.cells[pos.index];
-    this.cellGettingNewInfections = cell;
-    return cell;
-  };
-
-  this.updateCellInfo = function(posX, posY) {
-    if (this.lastMouseOveredCell) {
-      var cell = this.lastMouseOveredCell;
-      var $cellInfo = $("#cellInfo");
-      if (typeof posX !== 'undefined' && typeof posY !== 'undefined') {
-        $cellInfo.css("left", posX);
-        $cellInfo.css("top", posY);
-      }
-      $cellInfo.html("index: " + this.lastMouseOveredIndex +
-                     "<br>population: " + cell.populationCount() +
-                     "<br>susceptible: " + cell.susceptibleCount() + 
-                     "<br>incubated: " +
-                     cell.incubatedCount() + "<br>infectious: " + cell.infectiousCount() +
-                     "<br>recovered: " + cell.recoveredCount());
-      if (cell.populationLimit === 0) {
-        $cellInfo.hide();
-      } else {
-        $cellInfo.show();
-      }
+    if (running) {
+      running = false;
+      clearInterval(this.interval);
     }
   };
+
+  this.advanceByOneStep = function() {
+    if (!running) {
+      this.nextStep();
+    }
+  };
+
+  this.infectiousUpdate = function(cell, value) {
+    cell.addNewIncubated(value);
+    picture.updateWithNewData(grid.cells);
+    this.dataChanged.notify();
+  }
 
   this.restart = function() {
     grid.init();
     this.iterationNumber = 0;
-    plot = new Plot();
+    plot = new PlotView();
     plot.refresh();
     this.init();
-    this.showStats();
+    this.dataChanged.notify();
   }
 
   this.exportHistoryData = function() {
@@ -793,148 +738,233 @@ function Epidemic(_grid, _picture) {
     return grid.exportCurrentState();
   };
 
+  this.isRunning = function() {
+    return running;
+  }
+
   // constructor
   var grid = _grid;
   var picture = _picture;
   this.iterationNumber = 0;
-  var running = false;
-  var plot = new Plot();
+  running = false;
+  var plot = new PlotView();
   this.init();
 }
+
+function Event(sender) {
+    this._sender = sender;
+    this._listeners = [];
+}
+
+Event.prototype = {
+    attach : function (listener) {
+        this._listeners.push(listener);
+    },
+    notify : function (args) {
+        var index;
+
+        for (index = 0; index < this._listeners.length; index += 1) {
+            this._listeners[index](this._sender, args);
+        }
+    }
+};
 
 
 $(document).ready(function(){
   config.loadDefaultEpidemic();
   grid = new Grid();
-  var picture = new Picture(grid.colsCount, grid.rowsCount);
+  var picture = new PictureView(grid.colsCount, grid.rowsCount);
 
   var epidemic = new Epidemic(grid, picture);
-  epidemic.showStats();
+
+  var controller = {
+    epidemic: epidemic,
+    startButton: $("#start"),
+    pauseButton: $("#pause"),
+    oneStepButton: $("#oneStep"),
+    restartButton: $("#restart"),
+    cellGettingNewInfections: null,
+    init: function() {
+      var that = this;
+      this.startButton.click(function(event) {
+        event.preventDefault();
+        epidemic.run();
+        that.updateUI();
+      });
+      this.pauseButton.click(function(event) {
+        event.preventDefault();
+        epidemic.pause();
+        that.updateUI();
+      });
+      this.oneStepButton.click(function(event) {
+        event.preventDefault();
+        that.epidemic.advanceByOneStep();
+        that.updateUI();
+      });
+      this.restartButton.click(function(event) {
+        event.preventDefault();
+        that.epidemic.restart();
+        that.showAlert("Simulation has been restarted.");
+        that.updateUI();
+      });
+      $(document).keypress(function(event) {
+        switch(event.which) {
+          case 115: that.epidemic.run();
+          break;
+          case 112: that.epidemic.pause();
+          break;
+          case 110: that.epidemic.advanceByOneStep();
+          break;
+          case 114: that.epidemic.restart();
+          break;
+        }
+        that.updateUI();
+      });
+
+      $("#picture").mousemove(function(event) {
+        that.showCellInfo(event);
+      }).mouseleave(function() {
+        $("#cellInfo").hide();
+      }).mouseenter(function() {
+        $("#cellInfo").show();
+      });
+
+      $("#picture").click(function(event) {
+        var cellInfo = picture.getCellInfoByPosition(event.pageX, event.pageY);
+        var cell = grid.cells[cellInfo.index];
+        that.cellGettingNewInfections = cell;
+        if (cell.populationLimit > 0) {
+          $div = $("#cellAddIllForm");
+          $div.show();
+          $div.css("left", event.pageX);
+          $div.css("top", event.pageY);
+          $input = $("#illCount");
+          $input.attr("min", 0);
+          $input.attr("max", cell.susceptibleCount());
+        }
+      });
+
+      $("#illCount").change(function() {
+        $("#illSelectedCount").text($(this).val());
+      });
+
+      $("#illSubmit").click(function(event) {
+        $("#cellAddIllForm").hide();
+        that.epidemic.infectiousUpdate(that.cellGettingNewInfections, parseInt($("#illCount").val(), 10));
+        $("#illCount").attr("value", 0);
+        $("#illSelectedCount").text(0);
+        that.updateUI();
+      });
+
+      $("#randomlyAddIll").click(function(event) {
+        grid.addRandomlyPlacedIll();
+        that.showAlert("Randomly infected " + config.startingIllCount + " people.");
+        that.updateUI();
+      });
+
+      $("#exportPlotData").click(function(event) {
+        var blob = new Blob([epidemic.exportHistoryData()], {type: "text/plain;charset=utf-8"});
+        var fileName = "epi_hist_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
+          "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount;
+        saveAs(blob, fileName + ".dat");
+      });
+      $("#exportCellsData").click(function(event) {
+        var blob = new Blob([epidemic.exportCellsState ()], {type: "text/plain;charset=utf-8"});
+        var fileName = "epi_cells_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
+          "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount + "_t=" +
+          epidemic.iterationNumber;
+        saveAs(blob, fileName + ".dat");
+      });
+
+      // restart after changing lenghts of infection
+      $("#incubatedDays").change(function() {
+        epidemic.restart();
+      });
+      $("#infectiousDays").change(function() {
+        epidemic.restart();
+      });
+
+      $("input:radio[name=providedEpidemics]").change(function(event) {
+        event.preventDefault();
+        config.loadPredefinedSettings($(this).val());
+        that.showAlert("Settings for " + $(this).next().text() + " epidemic have been loaded.");
+      });
+
+      this.setObservers();
+      this.updateUI();
+    },
+    showCellInfo: function() {
+      var cellInfo = picture.getCellInfoByPosition(event.pageX, event.pageY);
+      var cell = grid.cells[cellInfo.index];
+      this.lastMouseOveredCell = cell;
+      this.lastMouseOveredIndex = cellInfo.index;
+      this.updateCellInfo(event.pageX, event.pageY + 15);
+    },
+    updateCellInfo: function(posX, posY) {
+      if (this.lastMouseOveredCell) {
+        var cell = this.lastMouseOveredCell;
+        var $cellInfo = $("#cellInfo");
+        if (typeof posX !== 'undefined' && typeof posY !== 'undefined') {
+          $cellInfo.css("left", posX);
+          $cellInfo.css("top", posY);
+        }
+        $cellInfo.html("index: " + this.lastMouseOveredIndex +
+                       "<br>population: " + cell.populationCount() +
+                       "<br>susceptible: " + cell.susceptibleCount() + 
+                       "<br>incubated: " +
+                       cell.incubatedCount() + "<br>infectious: " + cell.infectiousCount() +
+                       "<br>recovered: " + cell.recoveredCount());
+        if (cell.populationLimit === 0) {
+          $cellInfo.hide();
+        } else {
+          $cellInfo.show();
+        }
+      }
+    },
+    showAlert: function(msg) {
+      $("#alertText").html(msg);
+      $(".alert").show();
+      setTimeout(function () {
+        $(".alert").hide();
+      }, 4000);
+    },
+    setObservers: function() {
+      var that = this;
+      this.epidemic.automaticallyPaused.attach(function () {
+        that.updateUI();
+        that.showAlert("Simulation has been automatically paused because epidemic spread finished");
+      });
+      this.epidemic.dataChanged.attach(function () {
+        that.updateUI();
+      });
+    },
+    updateUI: function() {
+      if (!this.epidemic.isRunning()) {
+        this.startButton.removeAttr("disabled");
+        this.oneStepButton.removeAttr("disabled");
+        this.pauseButton.attr("disabled", "disabled");
+      } else {
+        this.startButton.attr("disabled", "disabled");
+        this.oneStepButton.attr("disabled", "disabled");
+        this.pauseButton.removeAttr("disabled");
+      }
+      $("#randomlyAddIll").text("Distribute randomly " + config.startingIllCount + " ill");
+      var pop = grid.populationOverallCount;
+      var inc = grid.incubatedOverallCount;
+      var inf = grid.infectiousOverallCount;
+      var rec = grid.recoveredOverallCount;
+      $("#iterationInfo tr:eq(0) td:eq(1)").html(this.epidemic.iterationNumber);
+      $("#iterationInfo tr:eq(1) td:eq(1)").html(numberWithThousandsFormatted(pop));
+      $("#iterationInfo tr:eq(2) td:eq(1)").html(numberWithThousandsFormatted(inc));
+      $("#iterationInfo tr:eq(3) td:eq(1)").html(numberWithThousandsFormatted(inf));
+      $("#iterationInfo tr:eq(4) td:eq(1)").html(numberWithThousandsFormatted(rec));
+      this.updateCellInfo(null, null); // nulls keep cell at the same position
+    },
+  };
+
+  controller.init();
 
   // # Events.
-  // ## Control buttons' events.
-  var startButton = $("#start");
-  var pauseButton = $("#pause");
-  var oneStepButton = $("#oneStep");
-  var restartButton = $("#restart");
-  startButton.click(function(event) {
-    event.preventDefault();
-    if($(this).attr('disabled')) {
-      return false;
-    };
-    if (!epidemic.running) {
-      $(this).attr("disabled", "disabled");
-      oneStepButton.attr("disabled", "disabled");
-      pauseButton.removeAttr("disabled");
-      epidemic.run();
-    }
-  });
-  pauseButton.click(function(event) {
-    if($(this).attr('disabled')) {
-      return false;
-    };
-    event.preventDefault();
-    startButton.removeAttr("disabled");
-    oneStepButton.removeAttr("disabled");
-    pauseButton.attr("disabled", "disabled");
-    epidemic.pause();
-  });
-  oneStepButton.click(function(event) {
-    if($(this).attr('disabled')) {
-      return false;
-    };
-    event.preventDefault();
-    epidemic.nextStep();
-  });
-  restartButton.click(function(event) {
-    event.preventDefault();
-    epidemic.restart();
-    showAlert("Simulation has been restarted.");
-  });
-
-  $(document).keypress(function(event) {
-    switch(event.which) {
-      case 115: startButton.click();
-      break;
-      case 112: pauseButton.click();
-      break;
-      case 110: oneStepButton.click();
-      break;
-      case 114: restartButton.click();
-      break;
-    }
-  });
-
-  $("#picture").click(function(event) {
-    var cell = epidemic.getClickedCellInfo(event);
-    if (cell.populationLimit > 0) {
-      $div = $("#cellAddIllForm");
-      $div.show();
-      $div.css("left", event.pageX);
-      $div.css("top", event.pageY);
-      $input = $("#illCount");
-      $input.attr("min", 0);
-      $input.attr("max", cell.susceptibleCount());
-    }
-  });
-
-  $("#picture").mousemove(function(event) {
-    epidemic.showCellInfo(event);
-  }).mouseleave(function() {
-    $("#cellInfo").hide();
-  }).mouseenter(function() {
-    $("#cellInfo").show();
-  });
-
-  $("#illCount").change(function() {
-    $("#illSelectedCount").text($(this).val());
-  });
-
-  $("#illSubmit").click(function(event) {
-    $("#cellAddIllForm").hide();
-    epidemic.infectiousUpdate(parseInt($("#illCount").val(), 10));
-    $("#illCount").attr("value", 0);
-    $("#illSelectedCount").text(0);
-  });
-
-  function updateMenUnderMap() {
-    $("#randomlyAddIll").text("Distribute randomly " + config.startingIllCount + " ill");
-  };
-  updateMenUnderMap();
-
-  $("#randomlyAddIll").click(function(event) {
-    grid.addRandomlyPlacedIll();
-    epidemic.showStats();
-  });
-
-  function saveAsOverallHistory() {
-    var blob = new Blob([epidemic.exportHistoryData()], {type: "text/plain;charset=utf-8"});
-    var fileName = "epi_hist_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
-      "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount;
-    saveAs(blob, fileName + ".dat");
-  }
-
-  function saveAsCellsState() {
-    var blob = new Blob([epidemic.exportCellsState ()], {type: "text/plain;charset=utf-8"});
-    var fileName = "epi_cells_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
-      "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount + "_t=" +
-      epidemic.iterationNumber;
-    saveAs(blob, fileName + ".dat");
-  }
-
-  $("#exportPlotData").click(function(event) {
-    saveAsOverallHistory();
-  });
-  $("#exportCellsData").click(function(event) {
-    saveAsCellsState();
-  });
-
-  $("input:radio[name=providedEpidemics]").change(function(event) {
-    event.preventDefault();
-    config.loadPredefinedSettings($(this).val());
-    showAlert("Settings for " + $(this).next().text() + " epidemic have been loaded.");
-  });
-
   $("#configuration input, #configuration select").change(function() {
     $("#configuration submit").click();
     configurationUpdated();
@@ -947,16 +977,8 @@ $(document).ready(function(){
   function configurationUpdated() {
     config.loadSettingsFromForm();
     $("input:radio[name=providedEpidemics]").prop('checked', false);
-    updateMenUnderMap();
-    showAlert("Settings have been saved.");
+    //updateMenUnderMap(); // TODO
+    //showAlert("Settings have been saved."); //TODO
   }
-
-  // restart after changing lenghts of infection
-  $("#incubatedDays").change(function() {
-    epidemic.restart();
-  });
-  $("#infectiousDays").change(function() {
-    epidemic.restart();
-  });
 });
 
