@@ -63,12 +63,12 @@ function numberWithThousandsFormatted(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-function Event(sender) {
+function Observer(sender) {
     this._sender = sender;
     this._listeners = [];
 }
 
-Event.prototype = {
+Observer.prototype = {
     attach : function (listener) {
         this._listeners.push(listener);
     },
@@ -88,7 +88,7 @@ var config = new function() {
     "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
     "startingIllPerCell", "incubatedDays", "infectiousDays", "infectionFunction"];
 
-  this.settingsChanged = new Event(this);
+  this.settingsChanged = new Observer(this);
 
   this.epidemics = {};
   this.epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 300, 20,
@@ -664,8 +664,8 @@ function Epidemic(_grid, _picture) {
 
   this.lastMouseOveredCell;
   this.lastMouseOveredIndex;
-  this.automaticallyPaused = new Event(this);
-  this.dataChanged = new Event(this);
+  this.automaticallyPaused = new Observer(this);
+  this.dataChanged = new Observer(this);
 
   this.init = function() {
     picture.updateWithNewData(grid.cells);
