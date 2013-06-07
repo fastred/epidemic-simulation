@@ -209,14 +209,6 @@ function Cell(_populationCount, _populationLimit) {
           var infectiousTodayInCell = Math.floor(this.susceptibleCount() * infectionProb);
           this.statesCount[i + 1] += infectiousTodayInCell;
           this.statesCount[i] -= infectiousTodayInCell;
-          // debug
-          //if (index == 820) {
-            //console.log("infectioustoday: " + infectiousTodayInCell + "\nimmigrantsinfectious " +
-                        //immigrantsInfectious + "\nthisinfectious: " + this.infectiousCount() +
-                       //"\nimmigrantpopulation: " + immigrantsPopulation +
-                       //"\nthispopulation: " + this.populationCount());
-            //console.log(immigrants);
-          //}
         } else {
           this.statesCount[i + 1] += this.statesCount[i];
           this.statesCount[i] = 0;
@@ -377,7 +369,6 @@ function Grid() {
   // breadth-first search of closest city
   this.findClosestBigCity = function() {
     closestCity = {};
-    //var resultJsonText = "{";
     for (var i = 0; i < cells.length; i++) {
       if (cells[i].populationLimit > 0) {
         var queue = [];
@@ -391,7 +382,6 @@ function Grid() {
           var distance = obj.dist;
           if (cells[index].populationCount() > config.commutingCityTreshold && index != i) {
             cityFound = true;
-            //resultJsonText += i + ": {ind: " + index + ", dist: " + distance + "},\n";
             closestCity[i] = {ind: index, dist: distance};
           }
           var neighbours = this.getNeighbours(index);
@@ -404,8 +394,6 @@ function Grid() {
         }
       }
     }
-    //resultJsonText += "}";
-    //console.log(resultJsonText);
   };
 
 
