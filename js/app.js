@@ -909,7 +909,7 @@ $(document).ready(function(){
 
   function saveAsOverallHistory() {
     var blob = new Blob([epidemic.exportHistoryData()], {type: "text/plain;charset=utf-8"});
-    var fileName = "epi_cells_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
+    var fileName = "epi_hist_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
       "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount;
     saveAs(blob, fileName + ".dat");
   }
