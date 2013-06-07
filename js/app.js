@@ -63,26 +63,46 @@ function numberWithThousandsFormatted(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
+function Event(sender) {
+    this._sender = sender;
+    this._listeners = [];
+}
+
+Event.prototype = {
+    attach : function (listener) {
+        this._listeners.push(listener);
+    },
+    notify : function (args) {
+        var index;
+
+        for (index = 0; index < this._listeners.length; index += 1) {
+            this._listeners[index](this._sender, args);
+        }
+    }
+};
+
 // # Configuration class
 var config = new function() {
 
-  var params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
+  this.params = ["immigrationRate", "illImmigrationRate", "birthRate", "naturalDeathRate",
     "virusMorbidity", "contactInfectionRate", "bigCityRate", "varCoeff", "startingIllCount",
     "startingIllPerCell", "incubatedDays", "infectiousDays", "infectionFunction"];
 
-  var epidemics = {};
-  epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 300, 20,
+  this.settingsChanged = new Event(this);
+
+  this.epidemics = {};
+  this.epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.3, 300, 20,
     2, 4, 0];
-  epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 300, 20,
+  this.epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.5, 0.4, 0.5, 300, 20,
     2, 4, 0];
-  epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 300, 20,
+  this.epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.3, 300, 20,
     2, 4, 0];
-  epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 300, 20,
+  this.epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.004, 0.4, 0.4, 0.5, 300, 20,
     2, 4, 0];
 
   // Generate getters and setters
-  for(id in params) {
-    var param = params[id];
+  for(id in this.params) {
+    var param = this.params[id];
     this[param] = function() {
       return this[param];
     };
@@ -94,40 +114,23 @@ var config = new function() {
 
   // Loads predefined (provided by authors) settings for few diseases.
   this.loadPredefinedSettings = function(epidemic_key) {
-    for(var id in params) {
-      var param = params[id];
-      this[param] = epidemics[epidemic_key][id];
+    for(var id in this.params) {
+      var param = this.params[id];
+      this[param] = this.epidemics[epidemic_key][id];
     }
-    this.pushSettingsToForm();
+    this.settingsChanged.notify();
   }
 
   // Loads settings entered by the user in the form.
-  this.loadSettingsFromForm = function() {
-    for (var id in params) {
-      var param = params[id];
-      this[param] = parseFloat($("#" + param).val());
-    }
-  }
-
-  // Updates user-facing form with new values. It's used e.g. after loading one
-  // of the default diseases.
-  this.pushSettingsToForm = function() {
-    for (var id in params) {
-      var param = params[id];
-      $("#" + param).val(this[param]);
+  this.loadSettingsFromForm = function(inputNamesToValues) {
+    for (var id in this.params) {
+      var param = this.params[id];
+      this[param] = inputNamesToValues[param];
     }
   }
 
   this.loadDefaultEpidemic = function() {
-    this.loadPredefinedSettings(Object.keys(epidemics)[0]);
-    var epidemicsHtml = "";
-    var first = true;
-    for (var key in epidemics) {
-      epidemicsHtml += '<label class="radio inline"><input type="radio" name="providedEpidemics" value="'+
-        key + '"' + (first ? 'checked' : '') + '><span>' + key + '</span></label>';
-      first = false;
-    }
-    $("#defaultEpidemics").html(epidemicsHtml);
+    this.loadPredefinedSettings(Object.keys(this.epidemics)[0]);
   }
 
   // static config
@@ -656,6 +659,7 @@ function PlotView() {
   }
 
   this.exportHistory = function() {
+    // TODO: move to epidemic object
     var result = "# day susceptible infected recovered population\n";
     for (var i=0; i < this.historySusceptible.length; i++) {
       var line = [(i + 1), this.historySusceptible[i][1], this.historyIll[i][1],
@@ -750,25 +754,6 @@ function Epidemic(_grid, _picture) {
   var plot = new PlotView();
   this.init();
 }
-
-function Event(sender) {
-    this._sender = sender;
-    this._listeners = [];
-}
-
-Event.prototype = {
-    attach : function (listener) {
-        this._listeners.push(listener);
-    },
-    notify : function (args) {
-        var index;
-
-        for (index = 0; index < this._listeners.length; index += 1) {
-            this._listeners[index](this._sender, args);
-        }
-    }
-};
-
 
 $(document).ready(function(){
   config.loadDefaultEpidemic();
@@ -884,14 +869,46 @@ $(document).ready(function(){
         epidemic.restart();
       });
 
-      $("input:radio[name=providedEpidemics]").change(function(event) {
+      // configuration
+      $("input:radio[name=providedEpidemics]").live("change", function(event) {
         event.preventDefault();
         config.loadPredefinedSettings($(this).val());
         that.showAlert("Settings for " + $(this).next().text() + " epidemic have been loaded.");
       });
+      $("#configuration input, #configuration select").change(function(event) {
+        that.configurationFormUpdated();
+      });
+      $("#configuration").submit(function(event) {
+        event.preventDefault();
+        that.configurationFormUpdated();
+      });
 
+      this.setupDefaultEpidemics();
       this.setObservers();
       this.updateUI();
+      config.settingsChanged.notify(); // push config values into form, because config
+      //had to be loaded before controller
+    },
+    configurationFormUpdated: function() {
+      var inputNamesToValues = {};
+      $("#configuration input, #configuration select").each(function(index, item) {
+        inputNamesToValues[$(item).attr("id")] = parseFloat($(item).val());
+      });
+      config.loadSettingsFromForm(inputNamesToValues);
+
+      $("input:radio[name=providedEpidemics]").prop('checked', false);
+      this.showAlert("Settings have been saved.");
+      this.updateUI();
+    },
+    setupDefaultEpidemics: function() {
+      var epidemicsHtml = "";
+      var first = true;
+      for (var key in config.epidemics) {
+        epidemicsHtml += '<label class="radio inline"><input type="radio" name="providedEpidemics" value="'+
+          key + '"' + (first ? 'checked' : '') + '><span>' + key + '</span></label>';
+        first = false;
+      }
+      $("#defaultEpidemics").html(epidemicsHtml);
     },
     showCellInfo: function() {
       var cellInfo = picture.getCellInfoByPosition(event.pageX, event.pageY);
@@ -937,6 +954,12 @@ $(document).ready(function(){
       this.epidemic.dataChanged.attach(function () {
         that.updateUI();
       });
+      config.settingsChanged.attach(function () {
+        for (var id in config.params) {
+          var param = config.params[id];
+          $("#" + param).val(config[param]);
+        }
+      });
     },
     updateUI: function() {
       if (!this.epidemic.isRunning()) {
@@ -963,22 +986,5 @@ $(document).ready(function(){
   };
 
   controller.init();
-
-  // # Events.
-  $("#configuration input, #configuration select").change(function() {
-    $("#configuration submit").click();
-    configurationUpdated();
-  });
-
-  $("#configuration").submit(function(event) {
-    event.preventDefault();
-    configurationUpdated();
-  });
-  function configurationUpdated() {
-    config.loadSettingsFromForm();
-    $("input:radio[name=providedEpidemics]").prop('checked', false);
-    //updateMenUnderMap(); // TODO
-    //showAlert("Settings have been saved."); //TODO
-  }
 });
 
