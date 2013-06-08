@@ -211,7 +211,6 @@ function Epidemic(_grid) {
 
   // Generates next step of the simulation.
   this.nextStep = function() {
-    // TODO
     this.oldInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
     worker.postMessage({'cmd': 'nextStep', 'config': config.serialize()});
   }
@@ -254,7 +253,7 @@ function Epidemic(_grid) {
   }
 
   this.restart = function() {
-    worker.postMessage({'cmd': 'init', 'config': config.serialize()});
+    this.initWorker();
     this.iterationNumber = 0;
     this.dataChanged.notify();
   }
@@ -271,6 +270,10 @@ function Epidemic(_grid) {
     worker.postMessage({'cmd': 'randomlyAddIll', 'config': config.serialize()});
   }
 
+  this.initWorker = function() {
+    worker.postMessage({'cmd': 'init', 'config': config.serialize()});
+  }
+
   // constructor
   var grid = _grid;
   this.iterationNumber = 0;
@@ -285,8 +288,11 @@ function Epidemic(_grid) {
           that.workerCompletedStep(e.data.grid);
           break;
         case 'incubatedAddedToCell':
+        case 'workerInitialized':
+        case 'addedRandomlyPlacedIll':
           that.deserializeGrid(e.data.grid);
           that.dataChanged.notify();
+          break;
         default:
           debug("unknown command from worker");
       };
@@ -294,7 +300,7 @@ function Epidemic(_grid) {
       debug(e.data);
     }
   }, false);
-  worker.postMessage({'cmd': 'init', 'config': config.serialize()});
+  this.initWorker();
 }
 
 $(document).ready(function(){

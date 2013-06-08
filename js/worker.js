@@ -12,7 +12,7 @@ self.addEventListener('message', function(e) {
     case 'init':
       config = data.config;
       grid = new Grid();
-      self.postMessage('WORKER INITIALIZED');
+      self.postMessage({'cmd': 'workerInitialized', 'grid': grid.serialize()});
       break;
     case 'nextStep':
       config = data.config;
@@ -22,7 +22,7 @@ self.addEventListener('message', function(e) {
     case 'randomlyAddIll':
       config = data.config;
       grid.addRandomlyPlacedIll();
-      self.postMessage('grid.addRandomlyPlacedIll() called');
+      self.postMessage({'cmd': 'addedRandomlyPlacedIll', 'grid': grid.serialize()});
       break;
     case 'addIncubatedToCell':
       config = data.config;
