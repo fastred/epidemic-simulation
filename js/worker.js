@@ -1,5 +1,5 @@
+importScripts("libs/underscore-min.js");
 importScripts("functions.js");
-importScripts("underscore-min.js");
 importScripts("polish_data.js");
 importScripts("cell.js");
 importScripts("grid.js");
@@ -28,8 +28,10 @@ self.addEventListener('message', function(e) {
       config = data.config;
       grid.cells[data.cellId].addNewIncubated(data.value);
       self.postMessage({'cmd': 'incubatedAddedToCell', 'grid': grid.serialize()});
+      break;
     default:
       self.postMessage('Unknown command: ' + data.msg);
-  };
+    break;
+  }
 }, false);
 
