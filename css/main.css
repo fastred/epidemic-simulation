@@ -3,7 +3,7 @@
 .lead { font-size: 18px; }
 .text-right { text-align: right; }
 #picture { position: absolute; }
-#plot { width: 700px; height: 190px; }
+#plot { width: 940px; height: 190px; }
 #cellInfo, #cellAddIllInfo { position: absolute; }
 .radio.inline+.radio.inline, .checkbox.inline+.checkbox.inline { margin-left: 20; }
 .radio.inline { margin-left: 10px; }
