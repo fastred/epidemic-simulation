@@ -510,8 +510,6 @@ function Grid() {
   }
 
   this.addRandomlyPlacedIll = function() {
-    config.startingIllCount;
-    config.startingIllPerCell;
     for (var i = 0; i < Math.floor(config.startingIllCount/config.startingIllPerCell); i++) {
       var cellId = this.nonEmptyCells[Math.floor(Math.random()*this.nonEmptyCells.length)];
       cells[cellId].statesCount[1] += config.startingIllPerCell ;
@@ -764,9 +762,7 @@ $(document).ready(function(){
       });
       this.restartButton.click(function(event) {
         event.preventDefault();
-        that.epidemic.restart();
-        that.setupPlot();
-        that.updateUI();
+        that.restartSimulation();
         that.showAlert("Simulation has been restarted.");
       });
       $(document).keypress(function(event) {
@@ -777,7 +773,7 @@ $(document).ready(function(){
           break;
           case 110: that.epidemic.advanceByOneStep();
           break;
-          case 114: that.epidemic.restart();
+          case 114: that.restartSimulation();
           break;
         }
         that.updateUI();
@@ -838,14 +834,6 @@ $(document).ready(function(){
         saveAs(blob, fileName + ".dat");
       });
 
-      // restart after changing lenghts of infection
-      $("#incubatedDays").change(function() {
-        epidemic.restart();
-      });
-      $("#infectiousDays").change(function() {
-        epidemic.restart();
-      });
-
       // configuration
       $("input:radio[name=providedEpidemics]").live("change", function(event) {
         event.preventDefault();
@@ -859,12 +847,22 @@ $(document).ready(function(){
         event.preventDefault();
         that.configurationFormUpdated();
       });
+      // restart after changing lenghts of infection - it must perform after configuration update
+      $("#incubatedDays, #infectiousDays").change(function() {
+        that.restartSimulation();
+      });
 
       this.setupDefaultEpidemics();
       this.setObservers();
       this.updateUI();
       config.settingsChanged.notify(); // push config values into form, because config
       //had to be loaded before controller
+    },
+    restartSimulation: function() {
+      this.epidemic.restart();
+      this.setupPlot();
+      this.updateUI();
+      this.showAlert("Simulation has been restarted.");
     },
     configurationFormUpdated: function() {
       var inputNamesToValues = {};
