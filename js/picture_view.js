@@ -26,9 +26,25 @@ function PictureView(_cols, _rows) {
 
   // Updates the map based on the current cells state.
   this.updateWithNewData = function(cells) {
+    var maxInfected = 0;
+    for(i = 0; i < cellsCount; i++) {
+      var infected = (cells[i].infectiousCount() + cells[i].incubatedCount());
+      if (infected > maxInfected) {
+        maxInfected = infected;
+      }
+    }
+    if (maxInfected > 0) {
+      $("#scaleMiddle").html(parseInt(maxInfected/2, 10));
+      $("#scaleMax").html(maxInfected);
+    }
     for(i = 0; i < cellsCount; i++) {
       if (cells[i].populationLimit > 0) {
-        var percentage = (cells[i].infectiousCount() + cells[i].incubatedCount()) / cells[i].populationCount();
+        var percentage;
+        if (maxInfected === 0) {
+          percentage = 0;
+        } else {
+          percentage = (cells[i].infectiousCount() + cells[i].incubatedCount()) / maxInfected;
+        }
         ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
 
         // debug
