@@ -356,6 +356,7 @@ $(document).ready(function(){
         that.updateUI();
       });
 
+      // TODO: move this block to PictureView class
       $("#picture").mousemove(function(event) {
         that.showCellInfo(event);
       }).mouseleave(function() {
@@ -363,7 +364,6 @@ $(document).ready(function(){
       }).mouseenter(function() {
         $("#cellInfo").show();
       });
-
       $("#picture").click(function(event) {
         var cellInfo = that.picture.getCellInfoByPosition(event.pageX, event.pageY);
         var cell = grid.cells[cellInfo.index];
@@ -378,11 +378,9 @@ $(document).ready(function(){
           $input.attr("max", cell.susceptibleCount());
         }
       });
-
       $("#illCount").change(function() {
         $("#illSelectedCount").text($(this).val());
       });
-
       $("#illSubmit").click(function(event) {
         $("#cellAddIllForm").hide();
         that.epidemic.infectiousUpdate(that.cellGettingNewInfectionsIndex, parseInt($("#illCount").val(), 10));
