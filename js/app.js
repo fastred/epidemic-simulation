@@ -207,6 +207,13 @@ $(document).ready(function(){
         that.restartSimulation();
       });
 
+      if (!window.Worker) {
+        alert("Your browser doesn't support web workers!");
+      }
+      if (!document.createElement('canvas').getContext) {
+        alert("Your browser doesn't support canvas!");
+      }
+
       this.setupDefaultEpidemics();
       this.setObservers();
       this.updateUI();
