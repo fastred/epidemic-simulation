@@ -666,6 +666,7 @@ function Epidemic(_grid) {
   this.lastMouseOveredIndex;
   this.automaticallyPaused = new Observer(this);
   this.dataChanged = new Observer(this);
+  this.newDataForPlot = new Observer(this);
 
   this.run = function() {
     if (!running) {
@@ -679,8 +680,7 @@ function Epidemic(_grid) {
   this.nextStep = function() {
     var oldInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
     grid.next();
-    plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
-                           grid.infectiousOverallCount, grid.recoveredOverallCount);
+    this.newDataForPlot.notify();
     this.iterationNumber++;
     var newInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
     if (oldInfectedCount > 0 && newInfectedCount == 0) {
@@ -711,14 +711,8 @@ function Epidemic(_grid) {
   this.restart = function() {
     grid.init();
     this.iterationNumber = 0;
-    plot = new PlotView();
-    plot.refresh();
     this.dataChanged.notify();
   }
-
-  this.exportHistoryData = function() {
-    return plot.exportHistory();
-  };
 
   this.exportCellsState = function() {
     return grid.exportCurrentState();
@@ -732,7 +726,6 @@ function Epidemic(_grid) {
   var grid = _grid;
   this.iterationNumber = 0;
   running = false;
-  var plot = new PlotView();
 }
 
 $(document).ready(function(){
@@ -749,9 +742,11 @@ $(document).ready(function(){
     restartButton: $("#restart"),
     cellGettingNewInfections: null,
     picture: null,
+    plot: null,
     init: function() {
       var that = this;
       this.picture = new PictureView(grid.colsCount, grid.rowsCount);
+      this.setupPlot();
       this.startButton.click(function(event) {
         event.preventDefault();
         epidemic.run();
@@ -770,8 +765,9 @@ $(document).ready(function(){
       this.restartButton.click(function(event) {
         event.preventDefault();
         that.epidemic.restart();
-        that.showAlert("Simulation has been restarted.");
+        that.setupPlot();
         that.updateUI();
+        that.showAlert("Simulation has been restarted.");
       });
       $(document).keypress(function(event) {
         switch(event.which) {
@@ -829,7 +825,7 @@ $(document).ready(function(){
       });
 
       $("#exportPlotData").click(function(event) {
-        var blob = new Blob([epidemic.exportHistoryData()], {type: "text/plain;charset=utf-8"});
+        var blob = new Blob([that.plot.exportHistory()], {type: "text/plain;charset=utf-8"});
         var fileName = "epi_hist_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
           "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount;
         saveAs(blob, fileName + ".dat");
@@ -891,6 +887,10 @@ $(document).ready(function(){
       }
       $("#defaultEpidemics").html(epidemicsHtml);
     },
+    setupPlot: function() {
+      this.plot = new PlotView();
+      this.plot.refresh();
+    },
     showCellInfo: function() {
       var cellInfo = this.picture.getCellInfoByPosition(event.pageX, event.pageY);
       var cell = grid.cells[cellInfo.index];
@@ -935,6 +935,10 @@ $(document).ready(function(){
       this.epidemic.dataChanged.attach(function () {
         that.updateUI();
         that.picture.updateWithNewData(grid.cells);
+      });
+      this.epidemic.newDataForPlot.attach(function() {
+        that.plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
+                           grid.infectiousOverallCount, grid.recoveredOverallCount);
       });
       config.settingsChanged.attach(function () {
         for (var id in config.params) {
