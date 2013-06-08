@@ -660,16 +660,13 @@ function PlotView() {
 }
 
 // # Epidemic class
-function Epidemic(_grid, _picture) {
+function Epidemic(_grid) {
 
   this.lastMouseOveredCell;
   this.lastMouseOveredIndex;
   this.automaticallyPaused = new Observer(this);
   this.dataChanged = new Observer(this);
 
-  this.init = function() {
-    picture.updateWithNewData(grid.cells);
-  }
   this.run = function() {
     if (!running) {
       running = true
@@ -682,7 +679,6 @@ function Epidemic(_grid, _picture) {
   this.nextStep = function() {
     var oldInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
     grid.next();
-    picture.updateWithNewData(grid.cells);
     plot.updateWithNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount +
                            grid.infectiousOverallCount, grid.recoveredOverallCount);
     this.iterationNumber++;
@@ -709,7 +705,6 @@ function Epidemic(_grid, _picture) {
 
   this.infectiousUpdate = function(cell, value) {
     cell.addNewIncubated(value);
-    picture.updateWithNewData(grid.cells);
     this.dataChanged.notify();
   }
 
@@ -718,7 +713,6 @@ function Epidemic(_grid, _picture) {
     this.iterationNumber = 0;
     plot = new PlotView();
     plot.refresh();
-    this.init();
     this.dataChanged.notify();
   }
 
@@ -736,19 +730,16 @@ function Epidemic(_grid, _picture) {
 
   // constructor
   var grid = _grid;
-  var picture = _picture;
   this.iterationNumber = 0;
   running = false;
   var plot = new PlotView();
-  this.init();
 }
 
 $(document).ready(function(){
   config.loadDefaultEpidemic();
   grid = new Grid();
-  var picture = new PictureView(grid.colsCount, grid.rowsCount);
 
-  var epidemic = new Epidemic(grid, picture);
+  var epidemic = new Epidemic(grid);
 
   var controller = {
     epidemic: epidemic,
@@ -757,8 +748,10 @@ $(document).ready(function(){
     oneStepButton: $("#oneStep"),
     restartButton: $("#restart"),
     cellGettingNewInfections: null,
+    picture: null,
     init: function() {
       var that = this;
+      this.picture = new PictureView(grid.colsCount, grid.rowsCount);
       this.startButton.click(function(event) {
         event.preventDefault();
         epidemic.run();
@@ -803,7 +796,7 @@ $(document).ready(function(){
       });
 
       $("#picture").click(function(event) {
-        var cellInfo = picture.getCellInfoByPosition(event.pageX, event.pageY);
+        var cellInfo = that.picture.getCellInfoByPosition(event.pageX, event.pageY);
         var cell = grid.cells[cellInfo.index];
         that.cellGettingNewInfections = cell;
         if (cell.populationLimit > 0) {
@@ -899,7 +892,7 @@ $(document).ready(function(){
       $("#defaultEpidemics").html(epidemicsHtml);
     },
     showCellInfo: function() {
-      var cellInfo = picture.getCellInfoByPosition(event.pageX, event.pageY);
+      var cellInfo = this.picture.getCellInfoByPosition(event.pageX, event.pageY);
       var cell = grid.cells[cellInfo.index];
       this.lastMouseOveredCell = cell;
       this.lastMouseOveredIndex = cellInfo.index;
@@ -941,6 +934,7 @@ $(document).ready(function(){
       });
       this.epidemic.dataChanged.attach(function () {
         that.updateUI();
+        that.picture.updateWithNewData(grid.cells);
       });
       config.settingsChanged.attach(function () {
         for (var id in config.params) {
