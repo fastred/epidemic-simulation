@@ -1,21 +1,3 @@
-function Observer(sender) {
-    this._sender = sender;
-    this._listeners = [];
-}
-
-Observer.prototype = {
-    attach : function (listener) {
-        this._listeners.push(listener);
-    },
-    notify : function (args) {
-        var index;
-
-        for (index = 0; index < this._listeners.length; index += 1) {
-            this._listeners[index](this._sender, args);
-        }
-    }
-};
-
 // # Configuration class
 var config = new function() {
 
@@ -54,7 +36,7 @@ var config = new function() {
       this[param] = this.epidemics[epidemic_key][id];
     }
     this.settingsChanged.notify();
-  }
+  };
 
   // Loads settings entered by the user in the form.
   this.loadSettingsFromForm = function(inputNamesToValues) {
@@ -62,11 +44,11 @@ var config = new function() {
       var param = this.params[id];
       this[param] = inputNamesToValues[param];
     }
-  }
+  };
 
   this.loadDefaultEpidemic = function() {
     this.loadPredefinedSettings(Object.keys(this.epidemics)[0]);
-  }
+  };
 
   // static config
   this.__defineGetter__("recoveredIndex", function(){
@@ -97,216 +79,12 @@ var config = new function() {
     paramsWithValues["statesCountLength"] = this.statesCountLength;
     paramsWithValues["commutingCityTreshold"] = this.commutingCityTreshold;
     return paramsWithValues;
-  }
+  };
 };
-
-// # PictureView class
-// Shows map of Poland, gather mouse clicks.
-function PictureView(_cols, _rows) {
-  var colsCount = _cols;
-  var rowsCount = _rows;
-  var cellsCount = colsCount * rowsCount;
-  var canvas = document.getElementById('picture');
-  var ctx = canvas.getContext('2d');
-  var canvasWidth = canvas.width;
-  var canvasHeight = canvas.height;
-  var sizeX = canvas.width/colsCount;
-  var sizeY = canvas.height/rowsCount;
-
-  // Returns info about the cell that is under the provided position on the page.
-  this.getCellInfoByPosition = function(pageX, pageY) {
-    var x = (pageX - canvas.offsetLeft);
-    var y = (pageY - canvas.offsetTop);
-    var col = Math.floor(x/sizeX);
-    var row = Math.floor(y/sizeY);
-    var index = col + row * colsCount;
-    return {
-      index: index,
-      col: col,
-      row: row
-    };
-  }
-
-  // Updates the map based on the current cells state.
-  this.updateWithNewData = function(cells) {
-    for(i = 0; i < cellsCount; i++) {
-      if (cells[i].populationLimit > 0) {
-        var percentage = (cells[i].infectiousCount() + cells[i].incubatedCount()) / cells[i].populationCount();
-        ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
-
-        // debug
-        //if (cells[i].populationLimit > 0) {
-          //ctx.fillStyle = "rgba(111, 111, 111, 0.4)";
-        //}
-        ctx.clearRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
-                      sizeY, sizeX, sizeY);
-        ctx.fillRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
-                     sizeY, sizeX, sizeY);
-      }
-    }
-  }
-}
-
-// # PlotView class
-function PlotView() {
-  var options = {
-    series: { shadowSize: 0 }, // drawing is faster without shadows
-    xaxis: { show: true }
-  };
-  this.historySusceptible = new Array();
-  this.historyRecovered = new Array();
-  this.historyIll = new Array();
-  var plot = $.plot($("#plot"), [], options);
-
-  // Adds new data to the plot and refresh it.
-  this.updateWithNewData = function(susceptible, ill, recovered) {
-    var count = this.historySusceptible.length;
-    this.historySusceptible.push([count, susceptible]);
-    this.historyRecovered.push([count, recovered]);
-    this.historyIll.push([count, ill]);
-    this.refresh();
-  }
-
-  this.refresh = function() {
-    plot.setData([
-      //{ label: "Recovered", color: "rgb(0, 185, 0)",
-                 //data: this.historyRecovered },
-      //{ label: "Susceptible", color: "rgb(0, 0, 0)",
-                 //data: this.historySusceptible },
-                 { label: "Incubated & Infectious",
-                   color: "rgb(185, 0, 0)",
-                   data: this.historyIll}]);
-    plot.setupGrid();
-    plot.draw();
-  }
-
-  this.exportHistory = function() {
-    // TODO: move to epidemic object
-    var result = "# day susceptible infected recovered population\n";
-    for (var i=0; i < this.historySusceptible.length; i++) {
-      var line = [(i + 1), this.historySusceptible[i][1], this.historyIll[i][1],
-        this.historyRecovered[i][1], (this.historySusceptible[i][1] + this.historyIll[i][1] +
-                                      this.historyRecovered[i][1])];
-      result += line.join(" ") + "\n";
-    }
-    return result;
-  };
-}
-
-// # Epidemic class
-function Epidemic(_grid) {
-
-  this.lastMouseOveredCell;
-  this.lastMouseOveredIndex;
-  this.automaticallyPaused = new Observer(this);
-  this.dataChanged = new Observer(this);
-  this.newDataForPlot = new Observer(this);
-
-  this.run = function() {
-    if (!running) {
-      running = true
-      this.nextStep();
-    }
-  }
-
-  // Generates next step of the simulation.
-  this.nextStep = function() {
-    this.oldInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
-    worker.postMessage({'cmd': 'nextStep', 'config': config.serialize()});
-  }
-
-  this.deserializeGrid = function(newSerializedGrid) {
-    grid.unserialize(newSerializedGrid);
-    grid.updateOverallCount();
-  }
-
-  this.workerCompletedStep = function(newSerializedGrid) {
-    this.deserializeGrid(newSerializedGrid);
-    this.newDataForPlot.notify();
-    this.iterationNumber++;
-    var newInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
-    if (this.oldInfectedCount > 0 && newInfectedCount == 0) {
-      this.pause();
-      this.automaticallyPaused.notify();
-    }
-    this.dataChanged.notify();
-    if (running) {
-      this.nextStep();
-    }
-  }
-
-  this.pause = function() {
-    if (running) {
-      running = false;
-    }
-  };
-
-  this.advanceByOneStep = function() {
-    if (!running) {
-      this.nextStep();
-    }
-  };
-
-  this.infectiousUpdate = function(cellId, value) {
-    worker.postMessage({'cmd': 'addIncubatedToCell', 'cellId': cellId, 'value': value,
-                       'config': config.serialize()});
-  }
-
-  this.restart = function() {
-    this.initWorker();
-    this.iterationNumber = 0;
-    this.dataChanged.notify();
-  }
-
-  this.exportCellsState = function() {
-    return grid.exportCurrentState();
-  };
-
-  this.isRunning = function() {
-    return running;
-  }
-
-  this.randomlyAddIll = function() {
-    worker.postMessage({'cmd': 'randomlyAddIll', 'config': config.serialize()});
-  }
-
-  this.initWorker = function() {
-    worker.postMessage({'cmd': 'init', 'config': config.serialize()});
-  }
-
-  // constructor
-  var grid = _grid;
-  this.iterationNumber = 0;
-  running = false;
-
-  var that = this;
-  var worker = new Worker("./js/worker.js");
-  worker.addEventListener('message', function(e) {
-    if (typeof e.data == "object") {
-      switch (e.data.cmd) {
-        case 'gridData':
-          that.workerCompletedStep(e.data.grid);
-          break;
-        case 'incubatedAddedToCell':
-        case 'workerInitialized':
-        case 'addedRandomlyPlacedIll':
-          that.deserializeGrid(e.data.grid);
-          that.dataChanged.notify();
-          break;
-        default:
-          debug("unknown command from worker");
-      };
-    } else {
-      debug(e.data);
-    }
-  }, false);
-  this.initWorker();
-}
 
 $(document).ready(function(){
   config.loadDefaultEpidemic();
-  grid = new Grid();
-
+  var grid = new Grid();
   var epidemic = new Epidemic(grid);
 
   var controller = {
@@ -351,6 +129,8 @@ $(document).ready(function(){
           case 110: that.epidemic.advanceByOneStep();
           break;
           case 114: that.restartSimulation();
+          break;
+          default:
           break;
         }
         that.updateUI();
@@ -541,9 +321,8 @@ $(document).ready(function(){
       $("#iterationInfo tr:eq(3) td:eq(1)").html(numberWithThousandsFormatted(inf));
       $("#iterationInfo tr:eq(4) td:eq(1)").html(numberWithThousandsFormatted(rec));
       this.updateCellInfo(null, null); // nulls keep cell at the same position
-    },
+    }
   };
-
   controller.init();
 });
 
