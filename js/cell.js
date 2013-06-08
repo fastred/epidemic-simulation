@@ -115,5 +115,17 @@ function Cell(_populationCount, _populationLimit) {
       this.statesCount[1] += value;
     }
   };
+  this.serialize = function() {
+    var data = {};
+    for (var i=0; i < config.statesCountLength; i++) {
+      data[i] = this.statesCount[i];
+    }
+    return data;
+  }
+  this.unserialize = function(data) {
+    for (var i=0; i < config.statesCountLength; i++) {
+      this.statesCount[i] = data[i];
+    }
+  }
 }
 

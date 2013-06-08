@@ -1,68 +1,3 @@
-// Shuffles array
-function shuffle(array) {
-    var tmp, current, top = array.length;
-    if(top) while(--top) {
-      current = Math.floor(Math.random() * (top + 1));
-      tmp = array[current];
-      array[current] = array[top];
-      array[top] = tmp;
-    }
-    return array;
-}
-
-function makeArrayOf(value, length) {
-  var arr = [], i = length;
-  while (i--) {
-    arr[i] = value;
-  }
-  return arr;
-}
-
-function supports_html5_storage() {
-  try {
-    return 'localStorage' in window && window['localStorage'] !== null;
-  } catch (e) {
-    return false;
-  }
-}
-
-function randomizeProbWithNormalDistribution(mu, varCoeff) {
-  var stddev = mu*varCoeff;
-  var prob = normal_random(mu, stddev*stddev);
-  if (prob > 1) {
-    prob = 1;
-  }
-  if (prob < 0) {
-    prob = 0;
-  }
-  return prob;
-}
-
-function normal_random(mean, variance) {
-  if (mean == undefined)
-    mean = 0.0;
-  if (variance == undefined)
-    variance = 1.0;
-  var V1, V2, S;
-  do {
-    var U1 = Math.random();
-    var U2 = Math.random();
-    V1 = 2 * U1 - 1;
-    V2 = 2 * U2 - 1;
-    S = V1 * V1 + V2 * V2;
-  } while (S > 1);
-
-  X = Math.sqrt(-2 * Math.log(S) / S) * V1;
-//  Y = Math.sqrt(-2 * Math.log(S) / S) * V2;
-  X = mean + Math.sqrt(variance) * X;
-//  Y = mean + Math.sqrt(variance) * Y ;
-  return X;
-  }
-
-function numberWithThousandsFormatted(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-}
-
 function Observer(sender) {
     this._sender = sender;
     this._listeners = [];
@@ -149,6 +84,20 @@ var config = new function() {
   this.__defineGetter__("commutingCityTreshold", function(){
     return 80000;
   });
+
+  this.serialize = function() {
+    var paramsWithValues = {};
+    for(var i in this.params) {
+      var paramName = this.params[i];
+      paramsWithValues[paramName] = this[paramName];
+    }
+    paramsWithValues["recoveredIndex"] = this.recoveredIndex;
+    paramsWithValues["incubatedIndex"] = this.incubatedIndex;
+    paramsWithValues["infectiousIndex"] = this.infectiousIndex;
+    paramsWithValues["statesCountLength"] = this.statesCountLength;
+    paramsWithValues["commutingCityTreshold"] = this.commutingCityTreshold;
+    return paramsWithValues;
+  }
 };
 
 // # PictureView class
@@ -256,29 +205,40 @@ function Epidemic(_grid) {
   this.run = function() {
     if (!running) {
       running = true
-      var that = this;
-      this.interval = setInterval(function() { that.nextStep()}, 50 );
+      this.nextStep();
     }
   }
 
   // Generates next step of the simulation.
   this.nextStep = function() {
-    var oldInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
-    grid.next();
+    // TODO
+    this.oldInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
+    worker.postMessage({'cmd': 'nextStep', 'config': config.serialize()});
+  }
+
+  this.deserializeGrid = function(newSerializedGrid) {
+    grid.unserialize(newSerializedGrid);
+    grid.updateOverallCount();
+  }
+
+  this.workerCompletedStep = function(newSerializedGrid) {
+    this.deserializeGrid(newSerializedGrid);
     this.newDataForPlot.notify();
     this.iterationNumber++;
     var newInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
-    if (oldInfectedCount > 0 && newInfectedCount == 0) {
+    if (this.oldInfectedCount > 0 && newInfectedCount == 0) {
       this.pause();
       this.automaticallyPaused.notify();
     }
     this.dataChanged.notify();
+    if (running) {
+      this.nextStep();
+    }
   }
 
   this.pause = function() {
     if (running) {
       running = false;
-      clearInterval(this.interval);
     }
   };
 
@@ -288,13 +248,13 @@ function Epidemic(_grid) {
     }
   };
 
-  this.infectiousUpdate = function(cell, value) {
-    cell.addNewIncubated(value);
-    this.dataChanged.notify();
+  this.infectiousUpdate = function(cellId, value) {
+    worker.postMessage({'cmd': 'addIncubatedToCell', 'cellId': cellId, 'value': value,
+                       'config': config.serialize()});
   }
 
   this.restart = function() {
-    grid.init();
+    worker.postMessage({'cmd': 'init', 'config': config.serialize()});
     this.iterationNumber = 0;
     this.dataChanged.notify();
   }
@@ -307,10 +267,34 @@ function Epidemic(_grid) {
     return running;
   }
 
+  this.randomlyAddIll = function() {
+    worker.postMessage({'cmd': 'randomlyAddIll', 'config': config.serialize()});
+  }
+
   // constructor
   var grid = _grid;
   this.iterationNumber = 0;
   running = false;
+
+  var that = this;
+  var worker = new Worker("./js/worker.js");
+  worker.addEventListener('message', function(e) {
+    if (typeof e.data == "object") {
+      switch (e.data.cmd) {
+        case 'gridData':
+          that.workerCompletedStep(e.data.grid);
+          break;
+        case 'incubatedAddedToCell':
+          that.deserializeGrid(e.data.grid);
+          that.dataChanged.notify();
+        default:
+          debug("unknown command from worker");
+      };
+    } else {
+      debug(e.data);
+    }
+  }, false);
+  worker.postMessage({'cmd': 'init', 'config': config.serialize()});
 }
 
 $(document).ready(function(){
@@ -325,7 +309,7 @@ $(document).ready(function(){
     pauseButton: $("#pause"),
     oneStepButton: $("#oneStep"),
     restartButton: $("#restart"),
-    cellGettingNewInfections: null,
+    cellGettingNewInfectionsIndex: null,
     picture: null,
     plot: null,
     init: function() {
@@ -377,7 +361,7 @@ $(document).ready(function(){
       $("#picture").click(function(event) {
         var cellInfo = that.picture.getCellInfoByPosition(event.pageX, event.pageY);
         var cell = grid.cells[cellInfo.index];
-        that.cellGettingNewInfections = cell;
+        that.cellGettingNewInfectionsIndex = cellInfo.index;
         if (cell.populationLimit > 0) {
           $div = $("#cellAddIllForm");
           $div.show();
@@ -395,14 +379,14 @@ $(document).ready(function(){
 
       $("#illSubmit").click(function(event) {
         $("#cellAddIllForm").hide();
-        that.epidemic.infectiousUpdate(that.cellGettingNewInfections, parseInt($("#illCount").val(), 10));
+        that.epidemic.infectiousUpdate(that.cellGettingNewInfectionsIndex, parseInt($("#illCount").val(), 10));
         $("#illCount").attr("value", 0);
         $("#illSelectedCount").text(0);
         that.updateUI();
       });
 
       $("#randomlyAddIll").click(function(event) {
-        grid.addRandomlyPlacedIll();
+        epidemic.randomlyAddIll();
         that.showAlert("Randomly infected " + config.startingIllCount + " people.");
         that.updateUI();
       });
@@ -476,7 +460,7 @@ $(document).ready(function(){
       this.plot = new PlotView();
       this.plot.refresh();
     },
-    showCellInfo: function() {
+    showCellInfo: function(event) {
       var cellInfo = this.picture.getCellInfoByPosition(event.pageX, event.pageY);
       var cell = grid.cells[cellInfo.index];
       this.lastMouseOveredCell = cell;

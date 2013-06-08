@@ -289,5 +289,19 @@ function Grid() {
     this.findClosestBigCity();
     this.updateOverallCount();
   }
+
+  this.serialize = function() {
+    var data = {}
+    for (var i=0; i < cells.length; i++) {
+      data[i] = cells[i].serialize();
+    }
+    return data;
+  }
+
+  this.unserialize = function(data) {
+    for (var i=0; i < cells.length; i++) {
+      cells[i].unserialize(data[i]);
+    }
+  }
   this.init();
 }
