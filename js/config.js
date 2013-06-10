@@ -79,5 +79,15 @@ var config = new function() {
     paramsWithValues["commutingCityTreshold"] = this.commutingCityTreshold;
     return paramsWithValues;
   };
+
+  this.textForHistoryFileName = function() {
+    return "epi_hist_beta=" + this.contactInfectionRate + "_v=" + this.varCoeff +
+      "_fun=" + this.infectionFunction + "_st=" + this.startingIllCount;
+  };
+
+  this.textForCellsStateFileName = function() {
+    return "epi_cells_beta=" + this.contactInfectionRate + "_v=" + this.varCoeff +
+      "_fun=" + this.infectionFunction + "_st=" + this.startingIllCount + "_t=";
+  };
 };
 

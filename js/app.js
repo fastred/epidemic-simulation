@@ -93,16 +93,11 @@ $(document).ready(function(){
 
       $("#exportPlotData").click(function(event) {
         var blob = new Blob([that.plot.exportHistory()], {type: "text/plain;charset=utf-8"});
-        var fileName = "epi_hist_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
-          "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount;
-        saveAs(blob, fileName + ".dat");
+        saveAs(blob, config.textForHistoryFileName() + ".dat");
       });
       $("#exportCellsData").click(function(event) {
         var blob = new Blob([epidemic.exportCellsState ()], {type: "text/plain;charset=utf-8"});
-        var fileName = "epi_cells_beta=" + config.contactInfectionRate + "_v=" + config.varCoeff +
-          "_fun=" + config.infectionFunction + "_st=" + config.startingIllCount + "_t=" +
-          epidemic.iterationNumber;
-        saveAs(blob, fileName + ".dat");
+        saveAs(blob, config.textForCellsStateFileName() + epidemic.iterationNumber + ".dat");
       });
 
       // configuration
