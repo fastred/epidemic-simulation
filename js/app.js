@@ -92,7 +92,7 @@ $(document).ready(function(){
       });
 
       $("#exportPlotData").click(function(event) {
-        var blob = new Blob([that.plot.exportHistory()], {type: "text/plain;charset=utf-8"});
+        var blob = new Blob([that.epidemic.history.exportData()], {type: "text/plain;charset=utf-8"});
         saveAs(blob, config.textForHistoryFileName() + ".dat");
       });
       $("#exportCellsData").click(function(event) {

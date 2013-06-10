@@ -29,17 +29,5 @@ function PlotView() {
     plot.setupGrid();
     plot.draw();
   };
-
-  this.exportHistory = function() {
-    // TODO: move to epidemic object
-    var result = "# day susceptible infected recovered population\n";
-    for (var i=0; i < this.historySusceptible.length; i++) {
-      var line = [(i + 1), this.historySusceptible[i][1], this.historyIll[i][1],
-        this.historyRecovered[i][1], (this.historySusceptible[i][1] + this.historyIll[i][1] +
-                                      this.historyRecovered[i][1])];
-      result += line.join(" ") + "\n";
-    }
-    return result;
-  };
 }
 
