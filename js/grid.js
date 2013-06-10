@@ -104,7 +104,7 @@ function Grid() {
         queuedIndices[i] = true;
         queue.push({ind: i, dist: 0});
         var cityFound = false;
-        while (!cityFound) {
+        while (!cityFound && queue.length > 0) {
           var obj = queue.shift();
           var index = obj.ind;
           var distance = obj.dist;
