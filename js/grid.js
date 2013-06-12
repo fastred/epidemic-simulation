@@ -303,6 +303,7 @@ function Grid() {
     for (var i=0; i < cells.length; i++) {
       cells[i].unserialize(data[i]);
     }
+    this.updateOverallCount();
   }
   this.init();
 }
