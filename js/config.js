@@ -65,6 +65,9 @@ var config = new function() {
   this.__defineGetter__("commutingCityTreshold", function(){
     return 80000;
   });
+  this.__defineGetter__("minPopulationForRandomIll", function(){
+    return 50000;
+  });
 
   this.serialize = function() {
     var paramsWithValues = {};
@@ -77,6 +80,7 @@ var config = new function() {
     paramsWithValues["infectiousIndex"] = this.infectiousIndex;
     paramsWithValues["statesCountLength"] = this.statesCountLength;
     paramsWithValues["commutingCityTreshold"] = this.commutingCityTreshold;
+    paramsWithValues["minPopulationForRandomIll"] = this.minPopulationForRandomIll;
     return paramsWithValues;
   };
 

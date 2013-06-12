@@ -239,7 +239,7 @@ function Grid() {
 
   this.addRandomlyPlacedIll = function() {
     for (var i = 0; i < Math.floor(config.startingIllCount/config.startingIllPerCell); i++) {
-      var cellId = this.nonEmptyCells[Math.floor(Math.random()*this.nonEmptyCells.length)];
+      var cellId = this.cellsForRandomIll[Math.floor(Math.random()*this.cellsForRandomIll.length)];
       cells[cellId].statesCount[config.infectiousIndex] += config.startingIllPerCell ;
       cells[cellId].statesCount[0] -= config.startingIllPerCell ;
     }
@@ -260,11 +260,11 @@ function Grid() {
   }
 
   this.init = function() {
-    this.nonEmptyCells = [];
+    this.cellsForRandomIll = [];
     _.each(cellsPopulation, function(value, key) {
       cells[key] = new Cell(value, value * 2.5);
-      if (value > 0) {
-        this.nonEmptyCells.push(key);
+      if (value > config.minPopulationForRandomIll) {
+        this.cellsForRandomIll.push(key);
       }
     }, this);
 
