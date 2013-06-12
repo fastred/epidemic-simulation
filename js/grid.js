@@ -240,7 +240,8 @@ function Grid() {
   this.addRandomlyPlacedIll = function() {
     for (var i = 0; i < Math.floor(config.startingIllCount/config.startingIllPerCell); i++) {
       var cellId = this.nonEmptyCells[Math.floor(Math.random()*this.nonEmptyCells.length)];
-      cells[cellId].statesCount[1] += config.startingIllPerCell ;
+      cells[cellId].statesCount[config.infectiousIndex] += config.startingIllPerCell ;
+      cells[cellId].statesCount[0] -= config.startingIllPerCell ;
     }
     this.updateOverallCount();
   };
