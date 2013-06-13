@@ -130,6 +130,7 @@ if (runMainSimulation) {
 }
 
 if (runCellsStateSimulation) {
+  config.incubatedDays = 2;
   // we do cell's state graphs only with beta = 0.6
   config.contactInfectionRate = 0.6;
 
