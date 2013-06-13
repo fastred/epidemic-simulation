@@ -2,6 +2,7 @@
 // command line parameters:
 // - R0 - runs simulation of R0 parameter
 // - main - runs main simulation
+// - cells - generate cells' state screenshots
 
 var fs = require('fs');
 var sys = require('sys');
@@ -33,6 +34,7 @@ var betaOptions = [0.2, 0.4, 0.6, 0.8];
 var runs = 10;
 var runR0Simulation = false;
 var runMainSimulation = false;
+var runCellsStateSimulation = false;
 
 process.argv.forEach(function (val, index, array) {
   console.log(index + ': ' + val);
@@ -41,6 +43,9 @@ process.argv.forEach(function (val, index, array) {
   }
   if (val == "main") {
     runMainSimulation = true;
+  }
+  if (val == "cells") {
+    runCellsStateSimulation = true;
   }
 });
 
@@ -121,5 +126,32 @@ if (runMainSimulation) {
       var fileName = "output/" + config.textForHistoryFileName().toString() + ".dat";
       fs.writeFileSync(fileName, averagedHistory.exportData());
     }
+  }
+}
+
+if (runCellsStateSimulation) {
+  // we do cell's state graphs only with beta = 0.6
+  config.contactInfectionRate = 0.6;
+
+  var screenshotInterval = 40;
+
+  for (var vIdx in vOptions) {
+    config.varCoeff = vOptions[vIdx];
+
+    var grid = new Grid();
+    loadGridOrAddRandom(grid);
+
+    var iteration = 0;
+    do {
+      var infectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
+      if (iteration % screenshotInterval === 0) {
+        console.log("iteration: " + iteration);
+        var fileName = "output/" + config.textForCellsStateFileName() + iteration + ".dat";
+        fs.writeFileSync(fileName, grid.exportCurrentState());
+      }
+
+      grid.next();
+      iteration++;
+    } while (infectedCount > 0);
   }
 }
