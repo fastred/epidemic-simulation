@@ -16,16 +16,16 @@ eval(fs.readFileSync('js/observer.js').toString());
 eval(fs.readFileSync('js/history.js').toString());
 eval(fs.readFileSync('js/config.js').toString());
 
-function loadGridOrAddRandom(grid) {
-  var gridStartingConfFileName = "output/grid.json";
-  if (fs.existsSync(gridStartingConfFileName)) {
-    var gridStartingData = JSON.parse(fs.readFileSync(gridStartingConfFileName));
-    grid.unserialize(gridStartingData);
-  } else {
-    grid.addRandomlyPlacedIll();
-    fs.writeFileSync(gridStartingConfFileName, JSON.stringify(grid.serialize()));
-  }
+var gridStartingConfFileName = "output/grid.json";
+if (!fs.existsSync(gridStartingConfFileName)) {
+  // create initial config if it doesn't exist
+  var grid = new Grid();
+  grid.addRandomlyPlacedIll();
+  fs.writeFileSync(gridStartingConfFileName, JSON.stringify(grid.serialize()));
 }
+
+// initial config for all simulations
+var GRID_DATA_AT_T_0 = JSON.parse(fs.readFileSync(gridStartingConfFileName));
 
 config.loadDefaultEpidemic();
 
@@ -61,7 +61,8 @@ if (runR0Simulation) {
       var histories = [];
       for (var runNum=0; runNum < runs; runNum++) {
         var grid = new Grid();
-        loadGridOrAddRandom(grid);
+        grid.unserialize(GRID_DATA_AT_T_0);
+        // before a = 2, but here a = 4
         var history = new History();
         for (var iteration=0; iteration < 5; iteration++) {
           history.addNewData(
@@ -104,7 +105,7 @@ if (runMainSimulation) {
       for (var runNum=0; runNum < runs; runNum++) {
         console.log("runNum: " + runNum);
         var grid = new Grid();
-        loadGridOrAddRandom(grid);
+        grid.unserialize(GRID_DATA_AT_T_0);
 
         var history = new History();
         var iteration = 0;
@@ -140,7 +141,7 @@ if (runCellsStateSimulation) {
     config.varCoeff = vOptions[vIdx];
 
     var grid = new Grid();
-    loadGridOrAddRandom(grid);
+    grid.unserialize(GRID_DATA_AT_T_0);
 
     var iteration = 0;
     do {
