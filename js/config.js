@@ -7,13 +7,13 @@ var config = new function() {
   this.settingsChanged = new Observer(this);
 
   this.epidemics = {};
-  this.epidemics['influenza-inf0.5var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.000043, 0.5, 0.4, 0.3, 300, 20,
+  this.epidemics['influenza-inf0.5var0.3'] = [0.055, 0.03, 0.0000277, 0.000027, 0.000043, 0.5, 0.23, 0.3, 300, 20,
     2, 4, 0];
-  this.epidemics['influenza-inf0.5var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.000043, 0.5, 0.4, 0.5, 300, 20,
+  this.epidemics['influenza-inf0.5var0.5'] = [0.055, 0.03, 0.0000277, 0.000027, 0.000043, 0.5, 0.23, 0.5, 300, 20,
     2, 4, 0];
-  this.epidemics['influenza-inf0.4var0.3'] = [0.05, 0.03, 0.0001, 0.0001, 0.000043, 0.4, 0.4, 0.3, 300, 20,
+  this.epidemics['influenza-inf0.4var0.3'] = [0.055, 0.03, 0.0000277, 0.000027, 0.000043, 0.4, 0.23, 0.3, 300, 20,
     2, 4, 0];
-  this.epidemics['influenza-inf0.4var0.5'] = [0.05, 0.03, 0.0001, 0.0001, 0.000043, 0.4, 0.4, 0.5, 300, 20,
+  this.epidemics['influenza-inf0.4var0.5'] = [0.055, 0.03, 0.0000277, 0.000027, 0.000043, 0.4, 0.23, 0.5, 300, 20,
     2, 4, 0];
 
   // Generate getters and setters
