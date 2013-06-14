@@ -50,19 +50,26 @@ process.argv.forEach(function (val, index, array) {
 });
 
 if (runR0Simulation) {
+  var oldInfectiousIndex = config.infectiousIndex;
   config.incubatedDays = 4;
   config.infectionFunction = 0;
   for (var vIdx in vOptions) {
     config.varCoeff = vOptions[vIdx];
     var result = "# beta R0\n";
-    for (var beta = 0; beta <= 1; beta += 0.1) {
+    for (var beta = 0; beta <= 1; beta += 0.05) {
       config.contactInfectionRate = beta;
 
       var histories = [];
       for (var runNum=0; runNum < runs; runNum++) {
         var grid = new Grid();
-        grid.unserialize(GRID_DATA_AT_T_0);
-        // before a = 2, but here a = 4
+
+        // in archived initial state length of incubated state is set to 2 days
+        // here we change it to 4, so we have to manully adjust it to proper array index
+        for (var cellId in grid.cells) {
+          grid.cells[cellId].addNewInfectious(
+            GRID_DATA_AT_T_0[cellId][oldInfectiousIndex]);
+        }
+
         var history = new History();
         for (var iteration=0; iteration < 5; iteration++) {
           history.addNewData(
