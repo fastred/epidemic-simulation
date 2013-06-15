@@ -36,6 +36,12 @@ var runR0Simulation = false;
 var runMainSimulation = false;
 var runCellsStateSimulation = false;
 
+// uses global data
+function numberOfRuns() {
+  // uses 0.1 because it can be float
+  return config.varCoeff < 0.1 ? 1 : runs;
+}
+
 process.argv.forEach(function (val, index, array) {
   console.log(index + ': ' + val);
   if (val == "R0") {
@@ -60,7 +66,7 @@ if (runR0Simulation) {
       config.contactInfectionRate = beta;
 
       var histories = [];
-      for (var runNum=0; runNum < runs; runNum++) {
+      for (var runNum=0; runNum < numberOfRuns(); runNum++) {
         var grid = new Grid();
 
         // in archived initial state length of incubated state is set to 2 days
@@ -109,7 +115,7 @@ if (runMainSimulation) {
       console.log(config.textForHistoryFileName());
 
       var histories = [];
-      for (var runNum=0; runNum < runs; runNum++) {
+      for (var runNum=0; runNum < numberOfRuns(); runNum++) {
         console.log("runNum: " + runNum);
         var grid = new Grid();
         grid.unserialize(GRID_DATA_AT_T_0);
