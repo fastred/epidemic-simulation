@@ -63,7 +63,7 @@ var config = new function() {
     return 2 + this.incubatedDays + this.infectiousDays;
   });
   this.__defineGetter__("commutingCityTreshold", function(){
-    return 80000;
+    return 50000;
   });
   this.__defineGetter__("minPopulationForRandomIll", function(){
     return 50000;
