@@ -30,7 +30,8 @@ var GRID_DATA_AT_T_0 = JSON.parse(fs.readFileSync(gridStartingConfFileName));
 config.loadDefaultEpidemic();
 
 var vOptions = [0, 0.5, 1];
-var betaOptions = [0.2, 0.4, 0.6, 0.8];
+var betaOptions = [0.1, 0.2, 0.25, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8];
+//var betaOptions = [0.3];
 var runs = 10;
 var runR0Simulation = false;
 var runMainSimulation = false;
