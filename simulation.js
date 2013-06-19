@@ -33,6 +33,7 @@ var vOptions = [0, 0.5, 1];
 var betaOptions = [0.1, 0.2, 0.25, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8];
 //var betaOptions = [0.3];
 var runs = 10;
+config.infectionFunction = 0;
 var runR0Simulation = false;
 var runMainSimulation = false;
 var runCellsStateSimulation = false;
@@ -59,7 +60,6 @@ process.argv.forEach(function (val, index, array) {
 if (runR0Simulation) {
   var oldInfectiousIndex = config.infectiousIndex;
   config.incubatedDays = 4;
-  config.infectionFunction = 0;
   for (var vIdx in vOptions) {
     config.varCoeff = vOptions[vIdx];
     var result = "# beta R0\n";
@@ -108,7 +108,6 @@ if (runR0Simulation) {
 
 if (runMainSimulation) {
   config.incubatedDays = 2;
-  config.infectionFunction = 0;
   for (var vIdx in vOptions) {
     config.varCoeff = vOptions[vIdx];
     for (var betaIdx in betaOptions) {
