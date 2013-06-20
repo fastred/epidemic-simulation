@@ -72,16 +72,14 @@ $(document).ready(function(){
           $input = $("#illCount");
           $input.attr("min", 0);
           $input.attr("max", cell.susceptibleCount());
+          $input.focus();
         }
       });
-      $("#illCount").change(function() {
-        $("#illSelectedCount").text($(this).val());
-      });
       $("#illSubmit").click(function(event) {
+        event.preventDefault();
         $("#cellAddIllForm").hide();
         that.epidemic.infectiousUpdate(that.cellGettingNewInfectionsIndex, parseInt($("#illCount").val(), 10));
-        $("#illCount").attr("value", 0);
-        $("#illSelectedCount").text(0);
+        $("#illCount").attr("value", "");
         that.updateUI();
       });
 
