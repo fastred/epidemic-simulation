@@ -63,7 +63,7 @@ if (runR0Simulation) {
   for (var vIdx in vOptions) {
     config.varCoeff = vOptions[vIdx];
     var result = "# beta R0\n";
-    for (var beta = 0; beta <= 1; beta += 0.05) {
+    for (var beta = 0; beta <= 1.01; beta += 0.05) {
       config.contactInfectionRate = beta;
 
       var histories = [];
