@@ -9,6 +9,7 @@ function PictureView(_cols, _rows) {
   var canvasHeight = canvas.height;
   var sizeX = canvas.width/colsCount;
   var sizeY = canvas.height/rowsCount;
+  var maxPopulation = -1;
 
   // Returns info about the cell that is under the provided position on the page.
   this.getCellInfoByPosition = function(pageX, pageY) {
@@ -24,33 +25,36 @@ function PictureView(_cols, _rows) {
     };
   };
 
+  this.log10 = function(value) {
+    return Math.log(value) / Math.log(10);
+  };
+
   // Updates the map based on the current cells state.
   this.updateWithNewData = function(cells) {
-    var maxInfected = 0;
-    for(i = 0; i < cellsCount; i++) {
-      var infected = (cells[i].infectiousCount() + cells[i].incubatedCount());
-      if (infected > maxInfected) {
-        maxInfected = infected;
+    // if maxPopulation not yet set
+    if (maxPopulation == -1 ) {
+      for(i = 0; i < cellsCount; i++) {
+        var population = cells[i].populationCount();
+        if (population > maxPopulation) {
+          maxPopulation = population;
+        }
       }
     }
-    if (maxInfected > 0) {
-      $("#scaleMiddle").html(parseInt(maxInfected/2, 10));
-      $("#scaleMax").html(maxInfected);
+    var maxPopulationLog = this.log10(maxPopulation);
+
+    if (maxPopulation > 0) {
+      $("#scaleMiddle").html(Math.round(Math.pow(maxPopulationLog / 2, 10)));
+      $("#scaleMax").html(maxPopulation);
     }
+
     for(i = 0; i < cellsCount; i++) {
       if (cells[i].populationLimit > 0) {
-        var percentage;
-        if (maxInfected === 0) {
-          percentage = 0;
-        } else {
-          percentage = (cells[i].infectiousCount() + cells[i].incubatedCount()) / maxInfected;
+        var percentage = 0;
+        if (cells[i].infectiousCount() + cells[i].incubatedCount() > 0) {
+          percentage = this.log10(cells[i].infectiousCount() + cells[i].incubatedCount()) /
+            maxPopulationLog;
         }
         ctx.fillStyle = "rgba(255,0,0," + percentage + ")";
-
-        // debug
-        //if (cells[i].populationLimit > 0) {
-          //ctx.fillStyle = "rgba(111, 111, 111, 0.4)";
-        //}
         ctx.clearRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
                       sizeY, sizeX, sizeY);
         ctx.fillRect((i % colsCount) * sizeX, Math.floor(i / colsCount) *
