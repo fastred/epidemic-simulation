@@ -5,6 +5,10 @@ function Epidemic(_grid) {
   this.automaticallyPaused = new Observer(this);
   this.dataChanged = new Observer(this);
   this.newDataForPlot = new Observer(this);
+  this.history = new History();
+  var grid = _grid;
+  this.iterationNumber = 0;
+  var running = false;
 
   this.run = function() {
     if (!running) {
@@ -24,8 +28,18 @@ function Epidemic(_grid) {
     grid.updateOverallCount();
   };
 
+  this.addDataToHistory = function() {
+    this.history.addNewData(grid.susceptibleOverallCount, grid.incubatedOverallCount,
+                            grid.infectiousOverallCount, grid.recoveredOverallCount);
+  };
+
   this.workerCompletedStep = function(newSerializedGrid) {
+    // add data at step t=0
+    if (this.iterationNumber === 0) {
+      this.addDataToHistory();
+    }
     this.deserializeGrid(newSerializedGrid);
+    this.addDataToHistory();
     this.newDataForPlot.notify();
     this.iterationNumber++;
     var newInfectedCount = grid.incubatedOverallCount + grid.infectiousOverallCount;
@@ -57,6 +71,7 @@ function Epidemic(_grid) {
   };
 
   this.restart = function() {
+    this.history = new History();
     this.initWorker();
     this.iterationNumber = 0;
     this.dataChanged.notify();
@@ -77,11 +92,6 @@ function Epidemic(_grid) {
   this.initWorker = function() {
     worker.postMessage({'cmd': 'init', 'config': config.serialize()});
   };
-
-  // constructor
-  var grid = _grid;
-  this.iterationNumber = 0;
-  running = false;
 
   var that = this;
   var worker = new Worker("./js/worker.js");

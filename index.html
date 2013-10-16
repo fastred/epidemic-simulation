@@ -13,12 +13,14 @@
 <script type="text/javascript" src="js/libs/FileSaver.min.js"></script>
 <script type="text/javascript" src="js/polish_data.js"></script>
 <script type="text/javascript" src="js/functions.js"></script>
+<script type="text/javascript" src="js/history.js"></script>
 <script type="text/javascript" src="js/cell.js"></script>
 <script type="text/javascript" src="js/grid.js"></script>
 <script type="text/javascript" src="js/picture_view.js"></script>
 <script type="text/javascript" src="js/plot_view.js"></script>
 <script type="text/javascript" src="js/observer.js"></script>
 <script type="text/javascript" src="js/epidemic.js"></script>
+<script type="text/javascript" src="js/config.js"></script>
 <script type="text/javascript" src="js/app.js"></script> 
 </head>
 <body>
@@ -39,14 +41,14 @@
       </div>
       <div class="row">
         <div class="span4 offset1">
-          Number of infected:
+          Number of infected (log scale):
         </div>
         <div id="imageScale" class="span4 offset1">
           <table>
             <tr>
               <td>0</td>
-              <td id="scaleMiddle">1</td>
-              <td id="scaleMax">2</td>
+              <td id="scaleMiddle"></td>
+              <td id="scaleMax"></td>
             </tr>
           </table>
         </div>
@@ -73,9 +75,11 @@
       <div id="cellInfo" class="popover bottom">
       </div>
       <div id="cellAddIllForm" class="popover top">
-        <input id="illCount" type="range" min="0" max="500" step="1" value="0" />
-        <div>New infections: <span id="illSelectedCount">0</span></div>
-        <button id="illSubmit" type="submit" class="btn btn-primary">Submit</button>
+        <form>
+          <div>New infections: </div>
+          <input id="illCount" type="number" min="0" max="500" step="1" />
+          <button id="illSubmit" type="submit" class="btn btn-primary">Submit</button>
+        </form>
       </div>
       <div class="row">
         <div class="span4 offset1">
@@ -103,11 +107,11 @@
             <label>Variation coeff. of contact rate (<i>v</i>)</label>
             <input required="required" type="number" id="varCoeff" min="0" max="1" step="0.001" placeholder="Value between 0 and 1">
             <label>Birth rate (<i>&mu;<sub>b</sub></i>)</label>
-            <input required="required" type="number" id="birthRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <input required="required" type="number" id="birthRate" min="0" max="1" step="0.0000001" placeholder="Value between 0 and 1">
             <label>Natural death rate (<i>&mu;<sub>d</sub></i>)</label>
-            <input required="required" type="number" id="naturalDeathRate" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <input required="required" type="number" id="naturalDeathRate" min="0" max="1" step="0.0000001" placeholder="Value between 0 and 1">
             <label>Virus morbidity (<i>&mu;<sub>vm</sub></i>)</label>
-            <input required="required" type="number" id="virusMorbidity" min="0" max="1" step="0.0001" placeholder="Value between 0 and 1">
+            <input required="required" type="number" id="virusMorbidity" min="0" max="1" step="0.000001" placeholder="Value between 0 and 1">
             <label>Random ill count</label>
             <input required="required" type="number" id="startingIllCount" min="0"  step="1">
             <label>Random ill per cell</label>

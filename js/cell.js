@@ -115,6 +115,12 @@ function Cell(_populationCount, _populationLimit) {
       this.statesCount[1] += value;
     }
   };
+  this.addNewInfectious = function(value) {
+    if (value <= this.statesCount[0]) {
+      this.statesCount[0] -= value;
+      this.statesCount[config.infectiousIndex] += value;
+    }
+  };
   this.serialize = function() {
     var data = {};
     for (var i=0; i < config.statesCountLength; i++) {

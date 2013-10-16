@@ -94,7 +94,7 @@ function Grid() {
     return neighbours;
   };
 
-  // breadth-first search of closest city
+  // breadth-first search of closest city at the distance > 1
   this.findClosestBigCity = function() {
     closestCity = {};
     for (var i = 0; i < cells.length; i++) {
@@ -104,11 +104,11 @@ function Grid() {
         queuedIndices[i] = true;
         queue.push({ind: i, dist: 0});
         var cityFound = false;
-        while (!cityFound) {
+        while (!cityFound && queue.length > 0) {
           var obj = queue.shift();
           var index = obj.ind;
           var distance = obj.dist;
-          if (cells[index].populationCount() > config.commutingCityTreshold && index != i) {
+          if (distance > 1 && index != i) {
             cityFound = true;
             closestCity[i] = {ind: index, dist: distance};
           }
@@ -142,15 +142,7 @@ function Grid() {
       if (currCell.populationLimit > 0) {
         var neighbours = this.getNeighbours(i);
         var closeCityObj = closestCity[i];
-        var closeCityExists = false;
-        if (currCell.populationCount() <= config.commutingCityTreshold && closeCityObj &&
-            closeCityObj.dist >= 1 && closeCityObj.dist <= 3) {
-          // if dist == 1 then city is already in neighbours
-          if (closeCityObj.dist > 1) {
-            neighbours.push(closeCityObj.ind);
-          }
-          closeCityExists = true;
-        }
+        neighbours.push(closeCityObj.ind);
 
         // precalculate counts of immigrants and then execute
         var precalculatedMoves = {}
@@ -165,15 +157,11 @@ function Grid() {
               var immigrationRate = k > 0 && k < config.statesCountLength - 1 ? config.illImmigrationRate :
                 config.immigrationRate;
               var toMove = Math.round(currCell.statesCount[k] * immigrationRate);
-              if (closeCityExists) {
-                if (neighbours[j] == closeCityObj.ind) {
-                  toMove *= config.bigCityRate;
-                } else {
-                  // uniformly distribute among neighbouring cells
-                  toMove *= (1 - config.bigCityRate) / (neighbours.length - 1);
-                }
+              if (neighbours[j] == closeCityObj.ind) {
+                toMove *= config.bigCityRate;
               } else {
-                toMove /= neighbours.length;
+                // uniformly distribute among neighbouring cells
+                toMove *= (1 - config.bigCityRate) / (neighbours.length - 1);
               }
               toMove = Math.floor(toMove);
               if (!(neighbours[j] in precalculatedMoves)) {
@@ -239,8 +227,9 @@ function Grid() {
 
   this.addRandomlyPlacedIll = function() {
     for (var i = 0; i < Math.floor(config.startingIllCount/config.startingIllPerCell); i++) {
-      var cellId = this.nonEmptyCells[Math.floor(Math.random()*this.nonEmptyCells.length)];
-      cells[cellId].statesCount[1] += config.startingIllPerCell ;
+      var cellId = this.cellsForRandomIll[Math.floor(Math.random()*this.cellsForRandomIll.length)];
+      cells[cellId].statesCount[config.infectiousIndex] += config.startingIllPerCell ;
+      cells[cellId].statesCount[0] -= config.startingIllPerCell ;
     }
     this.updateOverallCount();
   };
@@ -259,11 +248,11 @@ function Grid() {
   }
 
   this.init = function() {
-    this.nonEmptyCells = [];
+    this.cellsForRandomIll = [];
     _.each(cellsPopulation, function(value, key) {
       cells[key] = new Cell(value, value * 2.5);
-      if (value > 0) {
-        this.nonEmptyCells.push(key);
+      if (value > config.minPopulationForRandomIll) {
+        this.cellsForRandomIll.push(key);
       }
     }, this);
 
@@ -302,6 +291,7 @@ function Grid() {
     for (var i=0; i < cells.length; i++) {
       cells[i].unserialize(data[i]);
     }
+    this.updateOverallCount();
   }
   this.init();
 }
